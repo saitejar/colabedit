@@ -1,0 +1,11 @@
+discovery/__init__.py,sha256=ZuONjJmNnWp-0lm9Zl-8cCZ9O0WFvREA9dF0lIpmmeg,68
+discovery/etcd.py,sha256=GB8A4D53tpj-iACLsSdKR4bfMitgRp4a1sCgLLlBziM,2200
+discovery-0.0.4.dist-info/DESCRIPTION.rst,sha256=ykTN5bDCbs3sreIxKYn5ksWGfkH-tJ7oiD0yZ2AoXxA,67
+discovery-0.0.4.dist-info/METADATA,sha256=uHx7kt_bElxmDA7I_BpOAheZt9TBnQlrenyJ4ZkrLqk,367
+discovery-0.0.4.dist-info/RECORD,,
+discovery-0.0.4.dist-info/WHEEL,sha256=ZjEnM9ajJj3CC6PFLEd3wiDD9cvgsTK9wvIqII7XxRs,98
+discovery-0.0.4.dist-info/metadata.json,sha256=53tXuXQAzrOdAO6SNjQaXvpnmDwV6e_E-YuwF6oaVQY,505
+discovery-0.0.4.dist-info/top_level.txt,sha256=JDy-57F-r6cu_X0bL8M4JA3i8eq2ysrBRJM3qivMyHU,10
+discovery-0.0.4.dist-info/INSTALLER,sha256=zuuue4knoyJ-UwPPXg8fezS7VCrXJQrAP7zeNuwvFQg,4
+discovery/etcd.pyc,,
+discovery/__init__.pyc,,
