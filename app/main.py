@@ -33,7 +33,7 @@ def insert(message):
     dump = ' '.join(redis_manager.zrange('PPS_POS', 0, -1))
     logging.info('DUMP : ' + dump)
     redis_manager.hset('PPS_MAP', pps_pos, ch)
-    emit('keyPressEventSocket', {'data': message['char'], 'position': message['pos'], 'sid': request.sid})
+    emit('insert', {'data': message['char'], 'position': message['pos'], 'sid': request.sid})
 
 
 if __name__ == '__main__':
