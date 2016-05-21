@@ -23,17 +23,18 @@ app.secret_key = ''.join(random.choice(string.ascii_uppercase + string.digits)
 sio = SocketIO(app)
 
 
-@sio.on('keyPressEventSocket', namespace='/collabedit')
-def process_input(message):
+@sio.on('insert', namespace='/insert')
+def insert(message):
     logging.info("Request from SID : " + request.sid)  # Unique session Identifier for client
-    ch = chr(int(message['charc']))
-    pos = int(message['charpos'])
+    ch = chr(int(message['char']))
+    pos = int(message['pos'])
     pps_pos = 0.01 * pos
     redis_manager.zadd('PPS_POS', str(pps_pos), pps_pos)
     dump = ' '.join(redis_manager.zrange('PPS_POS', 0, -1))
     logging.info('DUMP : ' + dump)
     redis_manager.hset('PPS_MAP', pps_pos, ch)
-    emit('keyPressEventSocket', {'data': message['charc'], 'position': message['charpos'], 'sid': request.sid})
+    emit('keyPressEventSocket', {'data': message['char'], 'position': message['pos'], 'sid': request.sid})
+
 
 if __name__ == '__main__':
     app.run()

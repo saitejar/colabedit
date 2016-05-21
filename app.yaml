@@ -11,7 +11,16 @@ handlers:
 
 - url: /bootstrap
   static_dir: app/static/bootstrap
-  
+
+- url: /css
+  static_dir: app/static/css
+
+- url: /js
+  static_dir: app/static/js
+
+- url: /images
+  static_dir: app/static/images
+
 - url: /.*
   script: app.main.app
   secure: always
