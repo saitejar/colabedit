@@ -40,41 +40,36 @@ Authentication code has been taken from Google Inc.
 
         var flag = 0;
 
-        namespace = '/collabedit';
+        namespace = '/insert';
         socket = io.connect('http://' + document.domain + ':' + location.port + namespace);
-        socket.on('keyPressEventSocket', function(msg) {
+        var loc = 'http://' + document.domain + ':' + location.port + namespace;
+        console.log('http://' + document.domain + ':' + location.port + namespace);
+        socket.on('insert', function(msg) {
             console.log("Char Code: " + msg.data + ", Position : " + msg.position + ", received SID from server: " + msg.sid);
         });
 
-        function showDialog(event) {
-
-            var keyvalue = event.keyCode;
-            if (event.keyCode === 8 || event.keyCode === 46 || event.keyCode == 32) {
-
-            }
-
-            if (!event.shiftKey && event.keyCode >= 65 && event.keyCode <= 90 && !event.ctrlKey) {
-                keyvalue = keyvalue + 32;
-            }
-
-            var position = document.getElementById("maintext").selectionStart;
-
-
-            socket.emit('keyPressEventSocket', {charc: keyvalue, charpos: position});
-            /*$.ajax({
-                type: "POST",
-                url: $(location).attr('origin') + "/processit",
-                data: JSON.stringify({charc: keyvalue, charpos: position}),
-                contentType: "application/json;charset=UTF-8",
-                dataType: "json",
-                success: function (data) {
-                    console.log("getting back from python function (keyCode):" + data);
-                }
-            });*/
-
+        function insertChar(event) {
+            var keyvalue = event.charCode;
+            var position = document.getElementById("textarea").editor.getSelectedRange()[0];
+            console.log(keyvalue, position);
+            socket.emit('insert', {char: keyvalue, pos: position});
         }
 
-
+        function deleteChar(event) {
+            var keyvalue = event.keyCode;
+            var position = document.getElementById("textarea").editor.getSelectedRange()[0];
+            if(keyvalue==8){
+                console.log(keyvalue, position);
+                socket.emit('insert', {char: keyvalue, pos: position});
+            }// backspace
+            else if(keyvalue==46){
+                console.log(keyvalue, position);
+                socket.emit('insert', {char: keyvalue, pos: position});
+            } // delete
+            else{
+                console.log("do nothing");
+            }
+        }
     </script>
 </head>
 <style>
@@ -92,7 +87,7 @@ Authentication code has been taken from Google Inc.
 			text-shadow: 5px 5px  #6e1d37 ;
 	}
 
-	#maintext{
+	#textarea{
 		color:  #4f2f37 ;
 	}
 </style>
@@ -128,6 +123,8 @@ Authentication code has been taken from Google Inc.
             data: JSON.stringify({username: user}),
             success: function (data, sStatus, jqXHR) {
                 console.log(data);
+                document.getElementById('textarea').addEventListener("keypress", insertChar);
+                document.getElementById('textarea').addEventListener("keydown", deleteChar);
             }
         });
     }
@@ -157,7 +154,6 @@ Authentication code has been taken from Google Inc.
             }
         });
     }
-
     function heartbeat(user) {
         var times = new Date().getTime();
         $.ajax({
@@ -168,13 +164,12 @@ Authentication code has been taken from Google Inc.
             data: JSON.stringify({username: user, timeStamp: times}),
             success: function (jActiveUsers, sStatus, jqXHR) {
 				if(jActiveUsers != 'None'){
-					document.getElementById("maintext").value = jActiveUsers;
+					;
 				}
-
                 Client.RenderActiveUsers(jActiveUsers);
                 Client.Pulse = setTimeout(function () {
                     heartbeat(user);
-                }, 100);
+                }, 1000000);
             }
         });
     }
@@ -211,7 +206,7 @@ Authentication code has been taken from Google Inc.
                     $('#profile').append(
                             $(''));
                     $('#profile').append(
-                            $("<div class='container'><p class='whiteText'>Hello <b>" + profile.displayName + "</b></p><br/><p><img width='50px' src='" + profile.image.url + "'></p><input type='button' value='Clear' onclick='clearText()'> <br/><br/> <trix-editor name='content' id='maintext'></trix-editor></div>"));
+                            $("<div class='container'><p class='whiteText'>Hello <b>" + profile.displayName + "</b></p><br/><p><img width='50px' src='" + profile.image.url + "'></p><input type='button' value='Clear' onclick='clearText()'> <br/><br/> <trix-editor class='trix-content' name='content' id='textarea' trix-change=></trix-editor></div>"));
 
                 });
                 $('#authOps').show('slow');
@@ -339,6 +334,8 @@ Authentication code has been taken from Google Inc.
     function onSignInCallback(authResult) {
         helper.onSignInCallback(authResult);
     }
+
+
 </script>
 
 

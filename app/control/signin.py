@@ -185,9 +185,7 @@ def heartbeat():
 
     response = make_response(json.dumps(doc), 200)
     response.headers['Content-Type'] = 'application/json;charset=UTF-8'
-    logging.info('DOC!!!!!!!!!!!!!!!!!!!!!!  -   ' + doc)
     # response.headers['DOC'] = doc
-    print 'response ----  ====  ', response.headers
     return response
 
 
