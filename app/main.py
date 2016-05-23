@@ -12,6 +12,7 @@ from control.signin import signin_api_blueprint
 from simplekv.memory import DictStore
 from flask_kvsession import KVSessionExtension
 from model.redis_db import redis_manager
+from model.pps import PPS
 
 app = flask.Flask(__name__)
 app.debug = True
@@ -26,15 +27,17 @@ sio = SocketIO(app)
 @sio.on('insert', namespace='/insert')
 def insert(message):
     logging.info("Request from SID : " + request.sid)  # Unique session Identifier for client
-    ch = chr(int(message['char']))
+    ch = int(message['char'])
     pos = int(message['pos'])
-    pps_pos = 0.01 * pos
-    redis_manager.zadd('PPS_POS', str(pps_pos), pps_pos)
-    dump = ' '.join(redis_manager.zrange('PPS_POS', 0, -1))
-    logging.info('DUMP : ' + dump)
-    redis_manager.hset('PPS_MAP', pps_pos, ch)
-    emit('insert', {'data': message['char'], 'position': message['pos'], 'sid': request.sid})
+    pps = PPS(request.sid)
+    if int(message['char'])==8:
+        pps.delete(pos)
+    elif int(message['char'])!=8:
+        pps.insert(ch, pos)
+    else:
+        pass
 
+    emit('keyPressEventSocket', {'data': message['char'], 'position': message['pos'], 'sid': request.sid, 'user': message['userName']})
 
 if __name__ == '__main__':
     app.run()
