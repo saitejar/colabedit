@@ -3,13 +3,13 @@ import hot_redis
 from redis_db import client
 from redis_db import redis_manager
 from user_order import UserOrder
-from constants import PPS_STRUCT, POS_TAGS, KEYS, PERSIST, YES, NO
+from constants import PPS_STRUCT, POS_TAGS, KEYS, PERSIST, YES, NO, PHI
 from utils import sxor
 
 
 class PPS:
     def __init__(self, user, doc=''):
-        self.key = md5(str(user)+doc+PPS_STRUCT).hexdigest()
+        self.key = md5(str(user) + doc + PPS_STRUCT).hexdigest()
         self.key_pos_tags = md5(str(user) + doc + POS_TAGS).hexdigest()
         self.key_map_persistent = md5(str(user) + doc + PERSIST).hexdigest()
         self.pps = hot_redis.Dict(key=self.key, client=client)
@@ -17,18 +17,17 @@ class PPS:
         self.persist = hot_redis.Dict(key=self.key_map_persistent, client=client)
         self.users = UserOrder(doc=doc)
         self.user = user
-        if self.key not in hot_redis.List(KEYS, client=client):
-            print 'hello'
-            self.pps['0'] = '0'  # unicode for null
-            self.pps['1'] = '0'  # unicode for null
+        if hot_redis.List(key=KEYS, client=client).count(self.key) == 0:
+            self.pps['0'] = PHI  # unicode for null
+            self.pps['1'] = PHI  # unicode for null
             self.persist['0'] = YES
             self.persist['1'] = YES
             self.tags.append('0')
             self.tags.append('1')
-            hot_redis.List(KEYS).append(self.key)
-        print self.tags
+            hot_redis.List(key=KEYS, client=client).append(self.key)
 
     def add(self, pos_stamp, pos_stamp_next, x):
+        x = chr(x)
         pos_stamp = float(pos_stamp)
         pos_stamp_next = float(pos_stamp_next)
         pos = pos_stamp + (pos_stamp_next - pos_stamp) / 2
@@ -43,64 +42,60 @@ class PPS:
             self.pps[str(pos_stamp)] = 0
             self.persist[str(pos_stamp)] = NO
 
-    def insert(self, pos, ch):
+    def insert(self, ch, pos):
+        index = 0  # self.users.users.index(self.user)
         pos = int(pos)
+        no_of_users = 1  # len(self.users.users)
         lower_bound = 0
         lower_bound_persist = 0
         upper_bound_persist = 0
         found = False
-        left = 0
-        right = 0
+        self.tags.sort()
         for tag in self.tags:
-            if self.pps[tag] != '0':
+            if self.pps[tag] != PHI:
                 lower_bound += 1
             if lower_bound == pos:
                 found = True
                 break
+
         ltag = self.tags[lower_bound]
-        rtag = self.tags[lower_bound+1]
-        print ltag, ',', rtag
+        rtag = self.tags[lower_bound + 1]
         if self.persist[ltag] == YES and self.persist[rtag] == YES:
-            # left = float(ltag) + (self.users.index(self.user))*(float(rtag)-lower_bound_persist)/self.users.count()
-            left = float(ltag) + 0*(float(rtag)-lower_bound_persist)/2  # self.users.count()
+            left = float(ltag) + index * (
+                float(rtag) - lower_bound_persist) / no_of_users
 
-            # right = float(ltag) + (self.users.index(self.user)+1)*(float(rtag)-lower_bound_persist)/self.users.count()
-            right = float(ltag) + 1*(float(rtag)-lower_bound_persist)/2  # self.users.count()
-
+            right = float(ltag) + (index + 1) * (
+                float(rtag) - lower_bound_persist) / no_of_users
         elif self.persist[ltag] == NO and self.persist[rtag] == NO:
             left = float(ltag)
             right = float(rtag)
         elif self.persist[ltag] == NO and self.persist[rtag] == YES:
-            for p in range(lower_bound-1, -1, -1):
+            for p in range(lower_bound - 1, -1, -1):
                 if self.persist[self.tags[p]] == YES:
                     lower_bound_persist = str(p)
                     break
             left = float(ltag)
             lower_bound_persist = float(self.tags[lower_bound_persist])
-            # right = lower_bound_persist + (self.users.index()+1)*(float(rtag)-lower_bound_persist)/self.users.count()
-            right = lower_bound_persist + 1*(float(rtag)-lower_bound_persist)/2
-            # self.users.count()
-
+            right = lower_bound_persist + (index + 1) * (
+                float(rtag) - lower_bound_persist) / no_of_users
         else:
-            for p in range(lower_bound+2, self.tags.count(), -1):
+            for p in range(lower_bound + 2, len(self.tags), 1):
                 if self.persist[self.tags[p]] == YES:
                     upper_bound_persist = str(p)
                     break
             right = float(rtag)
             upper_bound_persist = float(self.tags[upper_bound_persist])
-            # left = ltag + (self.users.index()) * (float(upper_bound_persist) - ltag) / self.users.count()
-            left = ltag + 0 * (float(upper_bound_persist) - ltag) / 2
+            left = float(ltag) + index * (upper_bound_persist - float(ltag)) / no_of_users
 
         if found is True:
             self.add(left, right, ch)
-
-        print 'left=', left, ', right=', right
+        print self.piece(0, 1)
 
     def delete(self, pos):
         count = 0
         found = False
         for tag in self.tags:
-            if self.pps[tag] != '0':
+            if self.pps[tag] != PHI:
                 count += 1
             if count == pos:
                 found = True
@@ -114,9 +109,9 @@ class PPS:
         left = self.tags.index(str(pos_stamp_left))
         right = self.tags.index(str(pos_stamp_right))
         cur_doc = ""
-        count=0
+        count = 0
         for tag in self.tags:
-            if count>=left and count<right and self.pps[tag] != '0':
+            if (left <= count < right) and self.pps[tag] != '0':
                 cur_doc += self.pps[tag]
             count += 1
         return cur_doc

@@ -67,7 +67,7 @@
             var position = document.getElementById("textarea").editor.getSelectedRange()[0];
             if (keyvalue == 8) {
                 console.log(keyvalue, position);
-                socket.emit('insert', {char: keyvalue, pos: position});
+                socket.emit('insert', {char: keyvalue, pos: position, userName: guestUserName});
             }// backspace
             else if (keyvalue == 46) {
                 console.log(keyvalue, position);
@@ -90,14 +90,14 @@
                     type: 'POST',
                     dataType: 'json',
                     contentType: "application/json;charset=UTF-8",
-                    data: JSON.stringify({username: guestName, timeStamp: times, cursorPosition: position}),
+                    data: JSON.stringify({userName: guestName, timeStamp: times, cursorPosition: position}),
                     success: function (data, status, jqXHR) {
                         if (data != 'None') {
                             console.log("heartbeat sent");
                         }
                     }
                 });
-            }, 1000 * 5); //every 5 seconds
+            }, 100000 * 5); //every 5 seconds
         }
 
         function performTasksForGuest(guestName) {
@@ -118,7 +118,7 @@
                 type: 'POST',
                 dataType: 'json',
                 contentType: "application/json;charset=UTF-8",
-                data: JSON.stringify({username: guestName}),
+                data: JSON.stringify({userName: guestName}),
                 success: function (data, sStatus, jqXHR) {
 
                     if (data == "invalid") {
@@ -150,7 +150,7 @@
                 type: 'POST',
                 dataType: 'json',
                 contentType: "application/json;charset=UTF-8",
-                data: JSON.stringify({username: ''}),
+                data: JSON.stringify({userName: ''}),
                 success: function (data, sStatus, jqXHR) {
                     console.log(data);
                 }
@@ -167,7 +167,7 @@
                 type: 'POST',
                 dataType: 'json',
                 contentType: "application/json;charset=UTF-8",
-                data: JSON.stringify({username: ''}),
+                data: JSON.stringify({userName: ''}),
                 success: function (data, sStatus, jqXHR) {
                     console.log("cleared");
                 }
