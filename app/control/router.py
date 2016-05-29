@@ -5,6 +5,7 @@ from flask.ext.socketio import SocketIO, emit
 from flask import request, send_file, session, make_response, render_template, Blueprint, jsonify, request, Flask
 from ..model.redis_db import redis_manager
 from ..model.user_order import UserOrder
+from ..model.pps import PPS
 
 vendor.add("lib")
 router = Blueprint('router', __name__)
@@ -19,8 +20,12 @@ def index():
 
 @router.route('/heartbeat', methods=['POST'])
 def heartbeat():
-
-    response = make_response(json.dumps(doc), 200)
+    cursor_position = request.json['cursorPosition']
+    username = request.json['userName']
+    timestamp = request.json['timeStamp']
+    cur_text = PPS().piece(0, 1)
+    print 'hearbeat -', cur_text
+    response = make_response(json.dumps(cur_text), 200)
     response.headers['Content-Type'] = 'application/json;charset=UTF-8'
     # response.headers['DOC'] = doc
     return response

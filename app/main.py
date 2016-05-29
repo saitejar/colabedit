@@ -9,29 +9,28 @@ import logging
 from flask.ext.socketio import SocketIO, emit
 from flask import request
 from control.router import router
-from simplekv.memory import DictStore
-from flask_kvsession import KVSessionExtension
 from model.redis_db import redis_manager
 from model.pps import PPS
 
 app = flask.Flask(__name__)
 app.debug = True
-store = DictStore()
-KVSessionExtension(store, app)
+
 app.register_blueprint(router, url_prefix='')
-app.secret_key = ''.join(random.choice(string.ascii_uppercase + string.digits)
-                         for x in xrange(32))
 sio = SocketIO(app)
+redis_manager.flushall()
 
 
 @sio.on('insert', namespace='/insert')
 def insert(message):
+    print 'hello inset'
     ch = int(message['char'])
     pos = int(message['pos'])
-    pps = PPS(message['userName'])
+    user = message['userName']
+    pps = PPS(user=user)
     if int(message['char']) == 8:
         pps.delete(pos)
     elif int(message['char']) != 8:
+        print 'insertinggggg'
         pps.insert(ch, pos)
     else:
         pass
@@ -41,5 +40,5 @@ def insert(message):
 
 
 if __name__ == '__main__':
-    redis_manager.flushall()
+
     app.run()

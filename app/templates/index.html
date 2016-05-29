@@ -6,7 +6,9 @@
     <link type="text/css" rel="stylesheet" href="bootstrap/css/bootstrap.css" rel="stylesheet">
     <link type="text/css" rel="stylesheet" href="bootstrap/css/bootstrap-responsive.css" rel="stylesheet">
     <script src="js/trix-core.js"></script>
+    <script src="js/colab.js"></script>
     <script src="js/jquery.js"></script>
+    <script src="js/collections/sorted-map.js"></script>
     <script type="text/javascript" src="js/socketio.js"></script>
 
     <script>
@@ -42,8 +44,8 @@
         var flag = 0;
 
         namespace = '/insert';
-        socket = io.connect('http://' + document.domain + ':' + location.port + namespace);
-        var loc = 'http://' + document.domain + ':' + location.port + namespace;
+        socket = io.connect('http://' + document.domain + ':' + location.port + namespace, {'forceNew':true});
+        var loc = 'http://' + document.domain + ':' + location.port + namespace, heartBeatSetTimeout;
         console.log('http://' + document.domain + ':' + location.port + namespace);
 
         socket.on('keyPressEventSocket', function (msg) {
@@ -81,23 +83,23 @@
             }
         }
 
-         function startHeartbeat(guestName) {
-            heartBeatSetTimeout = setInterval(function () {
-                var times = new Date().getTime();
-                var position = document.getElementById("textarea").editor.getSelectedRange()[0];
-                $.ajax({
-                    url: '/heartbeat',
-                    type: 'POST',
-                    dataType: 'json',
-                    contentType: "application/json;charset=UTF-8",
-                    data: JSON.stringify({userName: guestName, timeStamp: times, cursorPosition: position}),
-                    success: function (data, status, jqXHR) {
-                        if (data != 'None') {
-                            console.log("heartbeat sent");
-                        }
-                    }
-                });
-            }, 100000 * 5); //every 5 seconds
+         function heartbeat(guestName) {
+             heartBeatSetTimeout = setInterval(function () {
+                 var times = new Date().getTime();
+                 var position = document.getElementById("textarea").editor.getSelectedRange()[0];
+                 $.ajax({
+                     url: '/heartbeat',
+                     type: 'POST',
+                     dataType: 'json',
+                     contentType: 'application/json;charset=UTF-8',
+                     data: JSON.stringify({userName: guestName, timeStamp: times, cursorPosition: position}),
+                     success: function (data) {
+                         if (data != 'None') {
+                             console.log("heartbeat sent and received : " + data);
+                         }
+                     }
+                 });
+             }, 5000); //every 5 seconds
         }
 
         function performTasksForGuest(guestName) {
@@ -105,10 +107,11 @@
             document.getElementById("loginSection").style.display = "none";
             document.getElementById("textareaSection").style.display = "block";
             document.getElementById('textarea').value = "";
-            document.getElementById('textarea').addEventListener("keypress", insertChar);
-            document.getElementById('textarea').addEventListener("keydown", deleteChar);
+            document.getElementById('textarea').addEventListener("keypress", insertText);
+            document.getElementById('textarea').addEventListener("keydown", deleteText);
+            document.getElementById('textarea').addEventListener("paste", detectPaste);
             document.getElementById("displayName").textContent = guestName;
-            startHeartbeat(guestName);
+            heartbeat(guestName);
         }
 
         function loginAsGuest() {
@@ -182,7 +185,7 @@
 
     @font-face {
         font-family: quicksand;
-        src: url(../static/fonts/Quicksand-Regular.otf);
+        src: url(fonts/Quicksand-Regular.otf);
     }
 
     body {
@@ -211,7 +214,7 @@
 
     <div id="loginSection" style="style:none; margin: auto">
         <br/><span style="color:white">- Under Prof. Sharad Mehrotra</span><br/><br><br/>
-        <img src="../static/images/ucilogo.png" width="100px"/><br/>
+        <img src="images/ucilogo.png" width="100px"/><br/>
         <br/><br/><br/><br/><br/><br/><br/><br/><br/>
         <div class="login-form">
             <h1>Login as a guest</h1>
