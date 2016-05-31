@@ -7,49 +7,62 @@ var recentVersion = 0;
 var pendingChanges = [];
 var sentChanges = [];
 var curDocText = '';
-ppsTags = [0, 1];
-pps = new Map();
-ppsAck = new Map();
+var ppsTags = [0, 1];
+var pps = new Map();
+var ppsAck = new Map();
 
 window.onbeforeunload = function(e) {
     if (typeof(Storage) !== "undefined") {
         localStorage.setItem("pendingChanges", pendingChanges);
         localStorage.setItem("sentChanges", sentChanges);
-        localStorage.setItem("ppsTags", ppsTags);
+        localStorage.setItem("ppsTags", ppsTags.toArray());
         localStorage.setItem("ppsAck", ppsAck);
         localStorage.setItem("pps", pps);
+        localStorage.setItem("lastReceivedGreatestSeqNum", lastReceivedGreatestSeqNum);
     }
 };
 
 window.onload = function() {
-    if (typeof(Storage) !== "undefined") {
+    if (getCookie("guestCookie") != "") {
+        if (typeof(Storage) !== "undefined") {
 
-        if(localStorage.getItem("pendingChanges") != null){
-            pendingChanges = localStorage.getItem("pendingChanges");
-            console.log("loaded pending changes from local storage : " + pendingChanges);
+            if (localStorage.getItem("pendingChanges") != null) {
+                pendingChanges = localStorage.getItem("pendingChanges");
+                console.log("loaded pending changes from local storage : " + pendingChanges);
+            }
+
+            if (localStorage.getItem("sentChanges") != null) {
+                sentChanges = localStorage.getItem("sentChanges");
+                console.log("loaded pending changes from local storage : " + sentChanges);
+            }
+
+            if (localStorage.getItem("ppsTags") != null) {
+                var t1 = localStorage.getItem("ppsTags");
+                var t2 = t1.split(",");
+                ppsTags = t2.splice();
+                console.log("loaded ppsTags from local storage : " + ppsTags);
+            }
+
+            if (localStorage.getItem("ppsAck") != null) {
+                ppsAck = localStorage.getItem("ppsAck");
+                console.log("loaded ppsAck from local storage : " + ppsAck);
+            }
+
+            if (localStorage.getItem("pps") != null) {
+                pps = localStorage.getItem("pps");
+                console.log("loaded pps from local storage : " + pps);
+            }
+
+            if (localStorage.getItem("lastReceivedGreatestSeqNum") != null) {
+                lastReceivedGreatestSeqNum = localStorage.getItem("lastReceivedGreatestSeqNum");
+                console.log("loaded lgsn from local storage : " + lastReceivedGreatestSeqNum);
+            } else {
+                lastReceivedGreatestSeqNum = 0;
+            }
+
+
+            document.getElementById("textarea").value = localStorage.getItem("textAreaValue");
         }
-
-        if(localStorage.getItem("sentChanges") != null){
-            sentChanges = localStorage.getItem("sentChanges");
-            console.log("loaded pending changes from local storage : " + sentChanges);
-        }
-
-        if(localStorage.getItem("ppsTags") != null){
-            ppsTags = localStorage.getItem("ppsTags");
-            console.log("loaded ppsTags from local storage : " + ppsTags);
-        }
-
-        if(localStorage.getItem("ppsAck") != null){
-            ppsAck = localStorage.getItem("ppsAck");
-            console.log("loaded ppsAck from local storage : " + ppsAck);
-        }
-
-        if(localStorage.getItem("pps") != null){
-            pps = localStorage.getItem("pps");
-            console.log("loaded pps from local storage : " + pps);
-        }
-
-        document.getElementById("textarea").value = localStorage.getItem("textAreaValue");
     }
 };
 
@@ -91,7 +104,7 @@ var insertText = function (event) {
         tryCounter: 0,
         retryLimit: 10,
         contentType: "application/json;charset=UTF-8",
-        data: JSON.stringify({changesToBePushed: sentChanges, userName: getCookie("guestCookie")}),
+        data: JSON.stringify({changesToBePushed: sentChanges}),
         success: function (data, sStatus, jqXHR) {
             console.log("(insert) successfully sent and received the message : " + data);
             sentChanges = [];
@@ -117,15 +130,20 @@ var insertText = function (event) {
 };
 
 var deleteText = function (event) {
-    var key = event.keyCode, tag;
+    var key = event.keyCode;
     var pos = document.getElementById("textarea").editor.getSelectedRange();
     if (key == 8) {
         if (pos[0] == 0 && pos[1] == 0) {
             return;
         }
         for (var p = pos[0] + 1; p <= pos[1]; p++) {
-            tag = PPS.delete(p);
-            pendingChanges.push({'delete': tag});
+            PPS.delete(p);
+        }
+        if (pos[0] == pos[1]) {
+            pendingChanges.push({'delete': [pos[0], pos[1]]})
+        }
+        else {
+            pendingChanges.push({'delete': [pos[0], pos[1] - 1]})
         }
     }// backspace
 
@@ -251,11 +269,8 @@ var PPS = function () {
                     break;
                 }
             }
-            if (found == true){
+            if (found == true)
                 PPS.hide(ppsTags[count]);
-                return ppsTags[count];
-            }
-            return 0;
         },
 
         add: function (tagx, tagy, ch) {

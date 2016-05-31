@@ -12,6 +12,8 @@
 
     <script>
 
+        var lastReceivedGreatestSeqNum;
+
         function getCookie(cname) {
             var name = cname + "=";
             var ca = document.cookie.split(';');
@@ -42,14 +44,14 @@
 
         var flag = 0;
 
-{#        namespace = '/insert';#}
-{#        socket = io.connect('http://' + document.domain + ':' + location.port + namespace, {'forceNew':true});#}
-{#        var loc = 'http://' + document.domain + ':' + location.port + namespace, heartBeatSetTimeout;#}
-{#        console.log('http://' + document.domain + ':' + location.port + namespace);#}
-{##}
-{#        socket.on('keyPressEventSocket', function (msg) {#}
-{#            console.log("Char Code: " + msg.data + ", Position : " + msg.position + ", received SID from server: " + msg.sid + ", and user is " + msg.user);#}
-{#        });#}
+        {#        namespace = '/insert';#}
+        {#        socket = io.connect('http://' + document.domain + ':' + location.port + namespace, {'forceNew':true});#}
+        {#        var loc = 'http://' + document.domain + ':' + location.port + namespace, heartBeatSetTimeout;#}
+        {#        console.log('http://' + document.domain + ':' + location.port + namespace);#}
+        {##}
+        {#        socket.on('keyPressEventSocket', function (msg) {#}
+        {#            console.log("Char Code: " + msg.data + ", Position : " + msg.position + ", received SID from server: " + msg.sid + ", and user is " + msg.user);#}
+        {#        });#}
 
         function insertChar(event) {
             var keyvalue = event.charCode;
@@ -77,26 +79,39 @@
             }
         }
 
-         function heartbeat(guestName) {
-             heartBeatSetTimeout = setInterval(function () {
-                 var times = new Date().getTime();
-                 var position = document.getElementById("textarea").editor.getSelectedRange()[0];
-                 $.ajax({
-                     url: '/heartbeat',
-                     type: 'POST',
-                     dataType: 'json',
-                     contentType: 'application/json;charset=UTF-8',
-                     data: JSON.stringify({userName: guestName, timeStamp: times, cursorPosition: position}),
-                     success: function (data) {
-                         if (data != 'None') {
-                             console.log("heartbeat sent and received : User Count : " + data.userCount + " , position : " + data.userPosition);
-                             if (typeof(Storage) !== "undefined") {
-                                 localStorage.setItem("userCount", parseInt(data.userCount));
-                             }
-                         }
-                     }
-                 });
-             }, 5000); //every 5 seconds
+        function heartbeat(guestName) {
+            heartBeatSetTimeout = setInterval(function () {
+                var times = new Date().getTime();
+                var position = document.getElementById("textarea").editor.getSelectedRange()[0];
+                $.ajax({
+                    url: '/heartbeat',
+                    type: 'POST',
+                    dataType: 'json',
+                    contentType: 'application/json;charset=UTF-8',
+                    data: JSON.stringify({
+                        userName: guestName,
+                        timeStamp: times,
+                        cursorPosition: position,
+                        lastGreatestSequenceNumber: lastReceivedGreatestSeqNum
+                    }),
+                    success: function (data) {
+                        if (data != 'None') {
+                            console.log("heartbeat sent and received : User Count : " + data.userCount);
+                            console.log("heartbeat sent and received : User Position : " + data.userPosition);
+                            if (typeof(Storage) !== "undefined") {
+                                localStorage.setItem("userCount", parseInt(data.userCount));
+                            }
+
+                                                        $.each(data.transactions, function (key, value) {
+                                                            var id = value.id;
+                                                            $.each(value.changes, function (k, v) {
+
+                                                            });
+                                                        });
+                        }
+                    }
+                });
+            }, 5000); //every 5 seconds
         }
 
         function performTasksForGuest(guestName) {
@@ -131,7 +146,6 @@
                         createCookie("guestCookie", guestName, 1);
                         performTasksForGuest(guestName);
                     }
-
                 }
             });
         }
@@ -239,9 +253,10 @@
         <h3>Welcome <b><i><span id="displayName"></span></i></b>!</h3>
         <button type="button" class="log-btn" style="width:100px; " onclick="logOut()">Log out</button>
 
-         <button type="button" class="log-btn" style="width:100px; display: none;" onclick="clearText()">Clear</button>
+        <button type="button" class="log-btn" style="width:100px; display: none;" onclick="clearText()">Clear</button>
         <br/><br/>
-    </div> <div id="usersOnline">Currently Online : <textarea id="userNames" disabled></textarea></div>
+    </div>
+    <div id="usersOnline">Currently Online : <textarea id="userNames" disabled></textarea></div>
     <trix-editor class='trix-content' name='content' id='textarea'></trix-editor>
 
 
