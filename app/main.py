@@ -38,7 +38,5 @@ def insert(message):
     emit('keyPressEventSocket',
          {'data': message['char'], 'position': message['pos'], 'sid': request.sid, 'user': message['userName']})
 
-
 if __name__ == '__main__':
-
     app.run()

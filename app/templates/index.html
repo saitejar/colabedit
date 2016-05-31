@@ -42,14 +42,14 @@
 
         var flag = 0;
 
-        namespace = '/insert';
-        socket = io.connect('http://' + document.domain + ':' + location.port + namespace, {'forceNew':true});
-        var loc = 'http://' + document.domain + ':' + location.port + namespace, heartBeatSetTimeout;
-        console.log('http://' + document.domain + ':' + location.port + namespace);
-
-        socket.on('keyPressEventSocket', function (msg) {
-            console.log("Char Code: " + msg.data + ", Position : " + msg.position + ", received SID from server: " + msg.sid + ", and user is " + msg.user);
-        });
+{#        namespace = '/insert';#}
+{#        socket = io.connect('http://' + document.domain + ':' + location.port + namespace, {'forceNew':true});#}
+{#        var loc = 'http://' + document.domain + ':' + location.port + namespace, heartBeatSetTimeout;#}
+{#        console.log('http://' + document.domain + ':' + location.port + namespace);#}
+{##}
+{#        socket.on('keyPressEventSocket', function (msg) {#}
+{#            console.log("Char Code: " + msg.data + ", Position : " + msg.position + ", received SID from server: " + msg.sid + ", and user is " + msg.user);#}
+{#        });#}
 
         function insertChar(event) {
             var keyvalue = event.charCode;
@@ -57,9 +57,7 @@
             var position = document.getElementById("textarea").editor.getSelectedRange()[0];
             console.log(keyvalue, position);
             socket.emit('insert', {char: keyvalue, pos: position, userName: guestUserName});
-            if (typeof(Storage) !== "undefined") {
-                localStorage.setItem("textAreaValue", document.getElementById("textarea").value);
-            }
+
         }
 
         function deleteChar(event) {
@@ -77,9 +75,6 @@
             else {
                 console.log("do nothing");
             }
-            if (typeof(Storage) !== "undefined") {
-                localStorage.setItem("textAreaValue", document.getElementById("textarea").value);
-            }
         }
 
          function heartbeat(guestName) {
@@ -94,7 +89,10 @@
                      data: JSON.stringify({userName: guestName, timeStamp: times, cursorPosition: position}),
                      success: function (data) {
                          if (data != 'None') {
-                             console.log("heartbeat sent and received : " + data);
+                             console.log("heartbeat sent and received : User Count : " + data.userCount + " , position : " + data.userPosition);
+                             if (typeof(Storage) !== "undefined") {
+                                 localStorage.setItem("userCount", parseInt(data.userCount));
+                             }
                          }
                      }
                  });
@@ -122,14 +120,16 @@
                 contentType: "application/json;charset=UTF-8",
                 data: JSON.stringify({userName: guestName}),
                 success: function (data, sStatus, jqXHR) {
-
                     if (data == "invalid") {
                         document.getElementById("invalidGuestName").style.display = "block";
                     } else {
-                        console.log("received from server : " + data);
+                        console.log("User Count : " + data.userCount + ", User pos : " + data.userPosition);
+                        if (typeof(Storage) !== "undefined") {
+                            localStorage.setItem("userCount", parseInt(data.userCount));
+                            localStorage.setItem("userPosition", parseInt(data.userPosition));
+                        }
                         createCookie("guestCookie", guestName, 1);
                         performTasksForGuest(guestName);
-
                     }
 
                 }
@@ -140,13 +140,16 @@
         function logOut() {
             document.getElementById("loginSection").style.display = "block";
             document.getElementById("textareaSection").style.display = "none";
-            localStorage.setItem("textAreaValue", "");
+            localStorage.removeItem("textAreaValue");
+            localStorage.removeItem("userCount");
+            localStorage.removeItem("userPosition");
+            localStorage.removeItem("pendingChanges");
+            localStorage.removeItem("sentChanges");
             clearTimeout(heartBeatSetTimeout);
             var cookies = document.cookie.split(";");
             for (var i = 0; i < cookies.length; i++) {
                 eraseCookie(cookies[i].split("=")[0]);
             }
-
             $.ajax({
                 url: '/deinitializeCall',
                 type: 'POST',
@@ -250,13 +253,9 @@
 
     if (getCookie("guestCookie") != "") {
         performTasksForGuest(getCookie("guestCookie"));
-        if (typeof(Storage) !== "undefined") {
-            document.getElementById("textarea").value = localStorage.getItem("textAreaValue");
-        }
     } else {
         document.getElementById("loginSection").style.display = "block";
         document.getElementById("textareaSection").style.display = "none";
-        localStorage.setItem("textAreaValue", "");
         if (typeof heartBeatSetTimeout !== 'undefined') {
             clearTimeout(heartBeatSetTimeout);
         }

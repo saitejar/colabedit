@@ -24,34 +24,35 @@ def heartbeat():
     username = request.json['userName']
     timestamp = request.json['timeStamp']
     cur_text = PPS().piece(0, 1)
-    print 'hearbeat -', cur_text
-    response = make_response(json.dumps(cur_text), 200)
+    response = make_response("{\"userCount\" : \"" + str(UserOrder(doc='').count()) + "\", \"userPosition\" : \"" + str(UserOrder(doc='').index(username.lower())) + "\"}", 200)
     response.headers['Content-Type'] = 'application/json;charset=UTF-8'
-    # response.headers['DOC'] = doc
     return response
 
 
 @router.route('/login', methods=['POST'])
 def initialize():
-    response = make_response(json.dumps('initialized successfully'), 200)
     username = request.json['userName']
-    UserOrder(doc='').add(username)
-    response.headers['Content-Type'] = 'application/json;charset=UTF-8'
-    return response
-
+    if(UserOrder(doc='').index(username.lower()) == -1):
+        UserOrder(doc='').add(username)
+        response = make_response("{\"userCount\" : \"" + str(UserOrder(doc='').count()) + "\", \"userPosition\" : \"" + str(UserOrder(doc='').index(username.lower())) + "\"}", 200)
+        response.headers['Content-Type'] = 'application/json;charset=UTF-8'
+        return response
+    else:
+        response = make_response(json.dumps('invalid'), 200)
+        response.headers['Content-Type'] = 'application/json;charset=UTF-8'
+        return response
 
 @router.route('/deinitializeCall', methods=['POST'])
 def deinitialize():
     response = make_response(json.dumps('deinitialized successfully'), 200)
     username = request.json['userName']
-    UserOrder(doc='').add(username)
     response.headers['Content-Type'] = 'application/json;charset=UTF-8'
     return response
 
-
-@router.route('/dummy', methods=['POST'])
-def login():
-    username = request.json['userName']
-    response = make_response(json.dumps(username), 200)
+@router.route('/sendChanges', methods=['POST'])
+def insertText():
+    response = make_response(json.dumps('success'), 200)
+    pendingChanges = request.json['changesToBePushed']
+    print "PENDING TO INSERT : " + str(pendingChanges)
     response.headers['Content-Type'] = 'application/json;charset=UTF-8'
     return response
