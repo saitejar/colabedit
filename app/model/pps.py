@@ -25,6 +25,13 @@ class PPS:
             self.tags.append('1')
             hot_redis.List(key=KEYS, client=client).append(self.key)
 
+    def attach(self, tag, x):
+        with hot_redis.transaction():
+            self.pps[str(tag)] = x
+            self.tags.append(str(tag))
+            self.tags.sort()  # optimize
+            self.persist[str(tag)] = YES
+
     def add(self, pos_stamp, pos_stamp_next, x):
         with hot_redis.transaction():
             x = chr(x)
@@ -43,8 +50,6 @@ class PPS:
             self.persist[str(pos_stamp)] = NO
 
     def insert(self, ch, pos):
-        print self.user
-        print self.user_list.users
         index = self.user_list.users.index(self.user)
         pos = int(pos)
         no_of_users = len(self.user_list.users)

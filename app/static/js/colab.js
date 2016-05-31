@@ -91,7 +91,7 @@ var insertText = function (event) {
         tryCounter: 0,
         retryLimit: 10,
         contentType: "application/json;charset=UTF-8",
-        data: JSON.stringify({changesToBePushed: sentChanges}),
+        data: JSON.stringify({changesToBePushed: sentChanges, userName: getCookie("guestCookie")}),
         success: function (data, sStatus, jqXHR) {
             console.log("(insert) successfully sent and received the message : " + data);
             sentChanges = [];
@@ -117,20 +117,15 @@ var insertText = function (event) {
 };
 
 var deleteText = function (event) {
-    var key = event.keyCode;
+    var key = event.keyCode, tag;
     var pos = document.getElementById("textarea").editor.getSelectedRange();
     if (key == 8) {
         if (pos[0] == 0 && pos[1] == 0) {
             return;
         }
         for (var p = pos[0] + 1; p <= pos[1]; p++) {
-            PPS.delete(p);
-        }
-        if (pos[0] == pos[1]) {
-            pendingChanges.push({'delete': [pos[0], pos[1]]})
-        }
-        else {
-            pendingChanges.push({'delete': [pos[0], pos[1] - 1]})
+            tag = PPS.delete(p);
+            pendingChanges.push({'delete': tag});
         }
     }// backspace
 
@@ -256,8 +251,11 @@ var PPS = function () {
                     break;
                 }
             }
-            if (found == true)
+            if (found == true){
                 PPS.hide(ppsTags[count]);
+                return ppsTags[count];
+            }
+            return 0;
         },
 
         add: function (tagx, tagy, ch) {
