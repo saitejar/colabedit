@@ -120,6 +120,8 @@ var PPS = function () {
         attach: function(tag, ch) {
             pps.set(tag, ch);
             ppsAck.set(tag, true);
+            ppsTags.push(tag);
+            ppsTags.sort();
         },
         add: function (tagx, tagy, ch) {
             var tag = (tagx + tagy) / 2;
@@ -130,7 +132,8 @@ var PPS = function () {
             return tag;
         },
         insert: function (pos, ch) {
-            var index = 0, numClients = 1;
+            var index = parseInt(localStorage.getItem('userPosition'));
+            var numClients = parseInt(localStorage.getItem('userCount'));
             var tag, lowB = 0;
             var found = false;
             ppsTags.sort();
@@ -169,6 +172,17 @@ var PPS = function () {
                 }
                 rtag = ppsTags[rB];
                 ltag = ppsTags[lB] + index * (rAck - ppsTags[lB]) / numClients;
+            }
+            else if (ppsAck.get(ppsTags[lB]) == true && ppsAck.get(ppsTags[rB]) == true) {
+                ltag = ppsTags[lB] + index * (ppsTags[rB] - ppsTags[lB]) / numClients;
+                rtag = ppsTags[lB] + (index+1) * (ppsTags[rB] - ppsTags[lB]) / numClients;
+            }
+            else if (ppsAck.get(ppsTags[lB]) == false && ppsAck.get(ppsTags[rB]) == false) {
+                ltag = ppsTags[lB];
+                rtag = ppsTags[rB];
+            }
+            else{
+
             }
             if (found == true) {
                 tag = PPS.add(ltag, rtag, ch);
@@ -267,7 +281,8 @@ function heartbeat(guestName) {
                 data: JSON.stringify({
                     userName: guestName,
                     timeStamp: times,
-                    cursorPosition: position
+                    cursorPosition: position,
+                    lastGreatestSequenceNumber: lastReceivedGreatestSeqNum
                 }),
                 success: function (data) {
                     if (data != 'None') {
@@ -275,13 +290,32 @@ function heartbeat(guestName) {
                         console.log("heartbeat sent and received : User Position : " + data.userPosition);
                         if (typeof(Storage) !== "undefined") {
                             localStorage.setItem("userCount", parseInt(data.userCount));
+                            localStorage.setItem("userPosition", parseInt(data.userPosition));
+                        }
+                        console.log("Transaction : " + JSON.stringify(data.transactions));
+                        if (JSON.stringify(data.transactions) != "{}") {
+                            $.each(data.transactions, function (key, value) {
+                                var id = key;
+                                if (id > lastReceivedGreatestSeqNum) {
+                                    lastReceivedGreatestSeqNum = id;
+                                }
+                                console.log("ID : " + id);
+
+                                $.each(value, function (k, v) {
+                                    console.log("CHANGE: " + k + " , " + v);
+                                    PPS.attach(k, v);
+                                    var currentCurPos = document.getElementById("textarea").editor.getSelectedRange()[0];
+
+
+                                });
+                            });
                         }
                     }
                 }
             });
         }
         ,
-        5000
+        1000
     ); //every 5 seconds
 }
 
@@ -309,31 +343,13 @@ window.onload = function () {
                     retryLimit: 10,
                     contentType: "application/json;charset=UTF-8",
                     data: JSON.stringify({
-                        changesToBePushed: sentChanges,
-                        lastGreatestSequenceNumber: lastReceivedGreatestSeqNum
+                        changesToBePushed: sentChanges
                     }),
                     success: function (data, sStatus, jqXHR) {
                         acknowledged = true;
                         console.log("(insert) successfully sent and received the message in send changess: " + data);
 
-                        console.log("Transaction : " + JSON.stringify(data.transactions));
-                        if (JSON.stringify(data.transactions) != "{}") {
-                            $.each(data.transactions, function (key, value) {
-                                var id = key;
-                                if (id > lastReceivedGreatestSeqNum) {
-                                    lastReceivedGreatestSeqNum = id;
-                                }
-                                console.log("ID : " + id);
 
-                                $.each(value, function (k, v) {
-                                    console.log("CHANGE: " + k + " , " + v);
-                                    PPS.attach(k, v);
-                                    var currentCurPos = document.getElementById("textarea").editor.getSelectedRange()[0];
-
-
-                                });
-                            });
-                        }
                     },
                     error: function (xhr, textStatus, errorThrown) {
                         if (textStatus == 'timeout') {
