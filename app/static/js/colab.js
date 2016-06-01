@@ -254,6 +254,37 @@ function heartbeat(guestName) {
     heartBeatSetTimeout = setInterval(function () {
             var times = new Date().getTime();
             var position = document.getElementById("textarea").editor.getSelectedRange()[0];
+            $.ajax({
+                url: '/heartbeat',
+                type: 'POST',
+                dataType: 'json',
+                contentType: 'application/json;charset=UTF-8',
+                data: JSON.stringify({
+                    userName: guestName,
+                    timeStamp: times,
+                    cursorPosition: position,
+                    lastGreatestSequenceNumber: lastReceivedGreatestSeqNum
+                }),
+                success: function (data) {
+                    if (data != 'None') {
+                        console.log("heartbeat sent and received : User Count : " + data.userCount);
+                        console.log("heartbeat sent and received : User Position : " + data.userPosition);
+                        if (typeof(Storage) !== "undefined") {
+                            localStorage.setItem("userCount", parseInt(data.userCount));
+                        }
+                    }
+                }
+            });
+        }
+        ,
+        10000
+    ); //every 5 seconds
+}
+
+window.onload = function() {
+    sendChangesSetTimeout = setInterval(function () {
+            var times = new Date().getTime();
+            var position = document.getElementById("textarea").editor.getSelectedRange()[0];
             if (acknowledged == true && Object.keys(pendingChanges).length > 0) {
 
                 acknowledged = false;
@@ -265,7 +296,6 @@ function heartbeat(guestName) {
                     console.log("Sentchanges: " + key);
                 }
 
-                console.log("sentchanges: " + JSON.stringify(sentChanges));
                 $.ajax({
                     url: '/sendChanges',
                     type: 'POST',
@@ -278,7 +308,13 @@ function heartbeat(guestName) {
                     data: JSON.stringify({changesToBePushed: sentChanges}),
                     success: function (data, sStatus, jqXHR) {
                         acknowledged = true;
-                        console.log("(insert) successfully sent and received the message : " + data);
+                        console.log("(insert) successfully sent and received the message in send changess: " + data);
+                        //  $.each(data.transactions, function (key, value) {
+                        //     var id = value.id;
+                        //     $.each(value.changes, function (k, v) {
+                        //
+                        //     });
+                        // });
                     },
                     error: function (xhr, textStatus, errorThrown) {
                         if (textStatus == 'timeout') {
@@ -298,37 +334,10 @@ function heartbeat(guestName) {
                 });
             }
 
-            // $.ajax({
-            //     url: '/heartbeat',
-            //     type: 'POST',
-            //     dataType: 'json',
-            //     contentType: 'application/json;charset=UTF-8',
-            //     data: JSON.stringify({
-            //         userName: guestName,
-            //         timeStamp: times,
-            //         cursorPosition: position,
-            //         lastGreatestSequenceNumber: lastReceivedGreatestSeqNum
-            //     }),
-            //     success: function (data) {
-            //         if (data != 'None') {
-            //             console.log("heartbeat sent and received : User Count : " + data.userCount);
-            //             console.log("heartbeat sent and received : User Position : " + data.userPosition);
-            //             if (typeof(Storage) !== "undefined") {
-            //                 localStorage.setItem("userCount", parseInt(data.userCount));
-            //             }
-            //             $.each(data.transactions, function (key, value) {
-            //                 var id = value.id;
-            //                 $.each(value.changes, function (k, v) {
-            //
-            //                 });
-            //             });
-            //         }
-            //     }
-            // });
         }
         ,
         1000
-    ); //every 5 seconds
+    );
 }
 
 function performTasksForGuest(guestName) {
