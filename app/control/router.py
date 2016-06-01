@@ -23,6 +23,7 @@ def heartbeat():
     cursor_position = request.json['cursorPosition']
     username = request.json['userName']
     timestamp = request.json['timeStamp']
+    print request.json
     last_received_change = int(request.json['lastGreatestSequenceNumber'])
     cur_text = PPS().piece(0, 1)
     reply = {}
@@ -34,7 +35,7 @@ def heartbeat():
     for id in ids:
         reply['transactions'][id] = json.loads(users.changes[id])
 
-    response = make_response(reply, 200)
+    response = make_response(json.dumps(reply), 200)
     response.headers['Content-Type'] = 'application/json;charset=UTF-8'
     return response
 
