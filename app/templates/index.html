@@ -83,35 +83,89 @@
             heartBeatSetTimeout = setInterval(function () {
                 var times = new Date().getTime();
                 var position = document.getElementById("textarea").editor.getSelectedRange()[0];
-                $.ajax({
-                    url: '/heartbeat',
-                    type: 'POST',
-                    dataType: 'json',
-                    contentType: 'application/json;charset=UTF-8',
-                    data: JSON.stringify({
-                        userName: guestName,
-                        timeStamp: times,
-                        cursorPosition: position,
-                        lastGreatestSequenceNumber: lastReceivedGreatestSeqNum
-                    }),
-                    success: function (data) {
-                        if (data != 'None') {
-                            console.log("heartbeat sent and received : User Count : " + data.userCount);
-                            console.log("heartbeat sent and received : User Position : " + data.userPosition);
-                            if (typeof(Storage) !== "undefined") {
-                                localStorage.setItem("userCount", parseInt(data.userCount));
+                  if (acknowledged == true) {
+
+                      acknowledged = false;
+                      var curlenPendingChanges = pendingChanges.length;
+
+                      if (typeof(Storage) !== "undefined") {
+                          localStorage.setItem("pendingChanges", pendingChanges);
+                          localStorage.setItem("sentChanges", sentChanges);
+                      }
+
+                      for (counter = 0; counter < curlenPendingChanges; counter++) {
+                          sentChanges.push(pendingChanges.shift());
+                      }
+
+                      if (typeof(Storage) !== "undefined") {
+                          localStorage.setItem("pendingChanges", pendingChanges);
+                          localStorage.setItem("sentChanges", sentChanges);
+
+                          $.ajax({
+                              url: '/sendChanges',
+                              type: 'POST',
+                              dataType: 'json',
+                              timeout: 3000,
+                              tryCounter: 0,
+                              retryLimit: 10,
+                              contentType: "application/json;charset=UTF-8",
+                              data: JSON.stringify({changesToBePushed: sentChanges}),
+                              success: function (data, sStatus, jqXHR) {
+                                  acknowledged = true;
+                                  console.log("(insert) successfully sent and received the message : " + data);
+                                  sentChanges = [];
+                              },
+                              error: function (xhr, textStatus, errorThrown) {
+                                  if (textStatus == 'timeout') {
+                                      this.tryCounter++;
+                                      if (this.tryCounter <= this.retryLimit) {
+                                          $.ajax(this);
+                                          return;
+                                      }
+                                      return;
+                                  }
+                                  if (xhr.status == 500) {
+                                      console.log("Server error while inserting");
+                                  } else {
+                                      console.log("unknown error while inserting");
+                                  }
+                              }
+                          });
+                      }
+                  }
+
+                    $.ajax({
+                        url: '/heartbeat',
+                        type: 'POST',
+                        dataType: 'json',
+                        contentType: 'application/json;charset=UTF-8',
+                        data: JSON.stringify({
+                            userName: guestName,
+                            timeStamp: times,
+                            cursorPosition: position,
+                            lastGreatestSequenceNumber: lastReceivedGreatestSeqNum
+                        }),
+                        success: function (data) {
+                            if (data != 'None') {
+                                console.log("heartbeat sent and received : User Count : " + data.userCount);
+                                console.log("heartbeat sent and received : User Position : " + data.userPosition);
+                                if (typeof(Storage) !== "undefined") {
+                                    localStorage.setItem("userCount", parseInt(data.userCount));
+                                }
+                                $.each(data.transactions, function (key, value) {
+                                    var id = value.id;
+                                    alert(id);
+                                    $.each(value.changes, function (k, v) {
+
+                                    });
+                                });
                             }
-
-                                                        $.each(data.transactions, function (key, value) {
-                                                            var id = value.id;
-                                                            $.each(value.changes, function (k, v) {
-
-                                                            });
-                                                        });
                         }
-                    }
-                });
-            }, 5000); //every 5 seconds
+                    });
+                }
+                ,
+                1000
+                ); //every 5 seconds
         }
 
         function performTasksForGuest(guestName) {
