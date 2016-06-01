@@ -5,7 +5,7 @@
 
 var recentVersion = 0;
 var pendingChanges = new Map();
-var sentChanges = [];
+
 var curDocText = '';
 var ppsTags = [0, 1];
 var pps = new Map();
@@ -37,44 +37,6 @@ var deleteText = function (event) {
             pendingChanges.set('delete', [pos[0], pos[1]-1])
         }
     }// backspace
-;
-
-    sentChanges = new Map();
-
-    for (key in pendingChanges.keys()) {
-        sentChanges.set(key, pendingChanges.get(key));
-    }
-
-    $.ajax({
-        url: '/sendChanges',
-        type: 'POST',
-        dataType: 'json',
-        timeout: 3000,
-        tryCounter: 0,
-        retryLimit: 10,
-        contentType: "application/json;charset=UTF-8",
-        data: JSON.stringify({changesToBePushed: sentChanges}),
-        success: function (data, sStatus, jqXHR) {
-            console.log("(insert) successfully sent and received the message : " + data);
-            sentChanges = [];
-        },
-        error: function (xhr, textStatus, errorThrown) {
-            if (textStatus == 'timeout') {
-                this.tryCounter++;
-                if (this.tryCounter <= this.retryLimit) {
-                    $.ajax(this);
-                    return;
-                }
-                return;
-            }
-            if (xhr.status == 500) {
-                console.log("Server error while inserting");
-            } else {
-                console.log("unknown error while inserting");
-            }
-        }
-    });
-
 };
 
 var pasteText = function (pasteInfo) {

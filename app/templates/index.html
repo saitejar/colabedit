@@ -83,15 +83,13 @@
             heartBeatSetTimeout = setInterval(function () {
                         var times = new Date().getTime();
                         var position = document.getElementById("textarea").editor.getSelectedRange()[0];
-                        if (true) {
+                        if (acknowledged == true) {
 
                             acknowledged = false;
-                            var curlenPendingChanges = pendingChanges.length;
+                            sentChanges = new Map();
 
-
-                            console.log(" p : " + pendingChanges);
-                            for (counter = 0; counter < curlenPendingChanges; counter++) {
-                                sentChanges.push(pendingChanges.shift());
+                            for (key in pendingChanges.keys()) {
+                                sentChanges.set(key, pendingChanges.get(key));
                             }
 
                             $.ajax({
@@ -107,7 +105,6 @@
                                 success: function (data, sStatus, jqXHR) {
                                     acknowledged = true;
                                     console.log("(insert) successfully sent and received the message : " + data);
-                                    sentChanges = [];
                                 },
                                 error: function (xhr, textStatus, errorThrown) {
                                     if (textStatus == 'timeout') {
