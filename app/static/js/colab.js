@@ -4,7 +4,7 @@
 
 
 var recentVersion = 0;
-var pendingChanges = new Map();
+var pendingChanges = {};
 
 var curDocText = '';
 var ppsTags = [0, 1];
@@ -17,7 +17,8 @@ var insertText = function (event) {
     var ch = event.charCode;
     var pos = document.getElementById("textarea").editor.getSelectedRange()[0];
     var tag = PPS.insert(pos, ch);
-    pendingChanges.set(tag, ch);
+    console.log("tag = "+tag);
+    pendingChanges[tag] = ch;
     console.log(pendingChanges);
 };
 
@@ -28,15 +29,15 @@ var deleteText = function (event) {
         console.log('deleted');
         if (pos[0] != 0 && pos[1] == pos[0]) {
             tag = PPS.delete(pos[0]);
-            if(tag != null){
-                pendingChanges.set(tag, 0);
+            if (tag != null) {
+                pendingChanges[tag] = 0;
             }
         }
-        else{
+        else {
             for (var p = pos[0] + 1; p <= pos[1]; p++) {
                 tag = PPS.delete(p);
-                if(tag != null){
-                    pendingChanges.set(tag, 0);
+                if (tag != null) {
+                    pendingChanges[tag] = 0;
                 }
             }
         }
@@ -48,7 +49,7 @@ var pasteText = function (pasteInfo) {
     for (var step = pasteInfo.start; step <= pasteInfo.end; step++) {
         ch = pasteInfo.text.charCodeAt(step - pasteInfo.start);
         tag = PPS.insert(step, ch);
-        pendingChanges.set('insert', [tag, ch]);
+        pendingChanges[tag] = ch;
     }
 
 };
@@ -108,7 +109,7 @@ var PPS = function () {
                     break;
                 }
             }
-            if (found == true){
+            if (found == true) {
                 console.log('here');
                 PPS.hide(ppsTags[count]);
                 return ppsTags[count];
@@ -191,212 +192,214 @@ var PPS = function () {
     }
 }();
 
- var lastReceivedGreatestSeqNum;
+var lastReceivedGreatestSeqNum;
 
-        function getCookie(cname) {
-            var name = cname + "=";
-            var ca = document.cookie.split(';');
-            for (var i = 0; i < ca.length; i++) {
-                var c = ca[i];
-                while (c.charAt(0) == ' ') {
-                    c = c.substring(1);
-                }
-                if (c.indexOf(name) == 0) {
-                    return c.substring(name.length, c.length);
-                }
-            }
-            return "";
+function getCookie(cname) {
+    var name = cname + "=";
+    var ca = document.cookie.split(';');
+    for (var i = 0; i < ca.length; i++) {
+        var c = ca[i];
+        while (c.charAt(0) == ' ') {
+            c = c.substring(1);
         }
-
-        function createCookie(name, value, days) {
-            if (days) {
-                var date = new Date();
-                date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-                var expires = "; expires=" + date.toGMTString();
-            }
-            else var expires = "";
-            document.cookie = name + "=" + value + expires + "; path=/";
+        if (c.indexOf(name) == 0) {
+            return c.substring(name.length, c.length);
         }
-        function eraseCookie(name) {
-            createCookie(name, "", -1);
-        }
+    }
+    return "";
+}
 
-        var flag = 0;
+function createCookie(name, value, days) {
+    if (days) {
+        var date = new Date();
+        date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+        var expires = "; expires=" + date.toGMTString();
+    }
+    else var expires = "";
+    document.cookie = name + "=" + value + expires + "; path=/";
+}
+function eraseCookie(name) {
+    createCookie(name, "", -1);
+}
 
-        function insertChar(event) {
-            var keyvalue = event.charCode;
-            var guestUserName = getCookie("guestCookie");
+var flag = 0;
+
+function insertChar(event) {
+    var keyvalue = event.charCode;
+    var guestUserName = getCookie("guestCookie");
+    var position = document.getElementById("textarea").editor.getSelectedRange()[0];
+    console.log(keyvalue, position);
+    socket.emit('insert', {char: keyvalue, pos: position, userName: guestUserName});
+
+}
+
+function deleteChar(event) {
+    var keyvalue = event.keyCode;
+    var guestUserName = getCookie("guestCookie");
+    var position = document.getElementById("textarea").editor.getSelectedRange()[0];
+    if (keyvalue == 8) {
+        console.log(keyvalue, position);
+        socket.emit('insert', {char: keyvalue, pos: position, userName: guestUserName});
+    }// backspace
+    else if (keyvalue == 46) {
+        console.log(keyvalue, position);
+        socket.emit('insert', {char: keyvalue, pos: position, userName: guestUserName});
+    } // delete
+    else {
+        console.log("do nothing");
+    }
+}
+
+function heartbeat(guestName) {
+    heartBeatSetTimeout = setInterval(function () {
+            var times = new Date().getTime();
             var position = document.getElementById("textarea").editor.getSelectedRange()[0];
-            console.log(keyvalue, position);
-            socket.emit('insert', {char: keyvalue, pos: position, userName: guestUserName});
+            if (acknowledged == true && Object.keys(pendingChanges).length > 0) {
 
-        }
+                acknowledged = false;
+                sentChanges = {};
+                console.log("pending: " + pendingChanges);
+                for (key in pendingChanges) {
+                    sentChanges[key] = pendingChanges[key];
+                    delete pendingChanges[key];
+                    console.log("Sentchanges: " + key);
+                }
 
-        function deleteChar(event) {
-            var keyvalue = event.keyCode;
-            var guestUserName = getCookie("guestCookie");
-            var position = document.getElementById("textarea").editor.getSelectedRange()[0];
-            if (keyvalue == 8) {
-                console.log(keyvalue, position);
-                socket.emit('insert', {char: keyvalue, pos: position, userName: guestUserName});
-            }// backspace
-            else if (keyvalue == 46) {
-                console.log(keyvalue, position);
-                socket.emit('insert', {char: keyvalue, pos: position, userName: guestUserName});
-            } // delete
-            else {
-                console.log("do nothing");
-            }
-        }
-
-        function heartbeat(guestName) {
-            heartBeatSetTimeout = setInterval(function () {
-                        var times = new Date().getTime();
-                        var position = document.getElementById("textarea").editor.getSelectedRange()[0];
-                        if (acknowledged == true) {
-
-                            acknowledged = false;
-                            sentChanges = new Map();
-
-                            for (key in pendingChanges.keys()) {
-                                sentChanges.set(key, pendingChanges.get(key));
-                                console.log("Sentchanges: " + sentChanges);
+                console.log("sentchanges: " + JSON.stringify(sentChanges));
+                $.ajax({
+                    url: '/sendChanges',
+                    type: 'POST',
+                    dataType: 'json',
+                    dataType: 'json',
+                    timeout: 3000,
+                    tryCounter: 0,
+                    retryLimit: 10,
+                    contentType: "application/json;charset=UTF-8",
+                    data: JSON.stringify({changesToBePushed: sentChanges}),
+                    success: function (data, sStatus, jqXHR) {
+                        acknowledged = true;
+                        console.log("(insert) successfully sent and received the message : " + data);
+                    },
+                    error: function (xhr, textStatus, errorThrown) {
+                        if (textStatus == 'timeout') {
+                            this.tryCounter++;
+                            if (this.tryCounter <= this.retryLimit) {
+                                $.ajax(this);
+                                return;
                             }
-
-                            $.ajax({
-                                url: '/sendChanges',
-                                type: 'POST',
-                                dataType: 'json',
-                                dataType: 'json',
-                                timeout: 3000,
-                                tryCounter: 0,
-                                retryLimit: 10,
-                                contentType: "application/json;charset=UTF-8",
-                                data: JSON.stringify({changesToBePushed: sentChanges}),
-                                success: function (data, sStatus, jqXHR) {
-                                    acknowledged = true;
-                                    console.log("(insert) successfully sent and received the message : " + data);
-                                },
-                                error: function (xhr, textStatus, errorThrown) {
-                                    if (textStatus == 'timeout') {
-                                        this.tryCounter++;
-                                        if (this.tryCounter <= this.retryLimit) {
-                                            $.ajax(this);
-                                            return;
-                                        }
-                                        return;
-                                    }
-                                    if (xhr.status == 500) {
-                                        console.log("Server error while inserting");
-                                    } else {
-                                        console.log("unknown error while inserting");
-                                    }
-                                }
-                            });
+                            return;
                         }
-
-                        // $.ajax({
-                        //     url: '/heartbeat',
-                        //     type: 'POST',
-                        //     dataType: 'json',
-                        //     contentType: 'application/json;charset=UTF-8',
-                        //     data: JSON.stringify({
-                        //         userName: guestName,
-                        //         timeStamp: times,
-                        //         cursorPosition: position,
-                        //         lastGreatestSequenceNumber: lastReceivedGreatestSeqNum
-                        //     }),
-                        //     success: function (data) {
-                        //         if (data != 'None') {
-                        //             console.log("heartbeat sent and received : User Count : " + data.userCount);
-                        //             console.log("heartbeat sent and received : User Position : " + data.userPosition);
-                        //             if (typeof(Storage) !== "undefined") {
-                        //                 localStorage.setItem("userCount", parseInt(data.userCount));
-                        //             }
-                        //             $.each(data.transactions, function (key, value) {
-                        //                 var id = value.id;
-                        //                 $.each(value.changes, function (k, v) {
-                        //
-                        //                 });
-                        //             });
-                        //         }
-                        //     }
-                        // });
-                    }
-                    ,
-                    1000
-            ); //every 5 seconds
-        }
-
-        function performTasksForGuest(guestName) {
-            document.getElementById("invalidGuestName").style.display = "none";
-            document.getElementById("loginSection").style.display = "none";
-            document.getElementById("textareaSection").style.display = "block";
-            document.getElementById('textarea').value = "";
-            document.getElementById('textarea').addEventListener("keypress", insertText);
-            document.getElementById('textarea').addEventListener("keydown", deleteText);
-            document.getElementById('textarea').addEventListener("paste", detectPaste);
-            document.getElementById("displayName").textContent = guestName;
-            lastReceivedGreatestSeqNum = -1;
-            heartbeat(guestName);
-        }
-
-        function loginAsGuest() {
-            var guestName = document.getElementById("UserName").value;
-            $.ajax({
-                url: '/login',
-                type: 'POST',
-                dataType: 'json',
-                contentType: "application/json;charset=UTF-8",
-                data: JSON.stringify({userName: guestName}),
-                success: function (data, sStatus, jqXHR) {
-                    if (data == "invalid") {
-                        document.getElementById("invalidGuestName").style.display = "block";
-                    } else {
-                        console.log("User Count : " + data.userCount + ", User pos : " + data.userPosition);
-                        if (typeof(Storage) !== "undefined") {
-                            localStorage.setItem("userCount", parseInt(data.userCount));
-                            localStorage.setItem("userPosition", parseInt(data.userPosition));
+                        if (xhr.status == 500) {
+                            console.log("Server error while inserting");
+                        } else {
+                            console.log("unknown error while inserting");
                         }
-                        createCookie("guestCookie", guestName, 1);
-                        performTasksForGuest(guestName);
                     }
-                }
-            });
-        }
-
-
-        function logOut() {
-            document.getElementById("loginSection").style.display = "block";
-            document.getElementById("textareaSection").style.display = "none";
-            localStorage.removeItem("userCount");
-            localStorage.removeItem("userPosition");
-            clearTimeout(heartBeatSetTimeout);
-            var cookies = document.cookie.split(";");
-            for (var i = 0; i < cookies.length; i++) {
-                eraseCookie(cookies[i].split("=")[0]);
+                });
             }
-            $.ajax({
-                url: '/deinitializeCall',
-                type: 'POST',
-                dataType: 'json',
-                contentType: "application/json;charset=UTF-8",
-                data: JSON.stringify({userName: ''}),
-                success: function (data, sStatus, jqXHR) {
-                    console.log(data);
-                }
-            });
-        }
 
-  function clearText() {
-            $.ajax({
-                url: '/clearTextArea',
-                type: 'POST',
-                dataType: 'json',
-                contentType: "application/json;charset=UTF-8",
-                data: JSON.stringify({userName: ''}),
-                success: function (data, sStatus, jqXHR) {
-                    console.log("cleared");
-                }
-            });
+            // $.ajax({
+            //     url: '/heartbeat',
+            //     type: 'POST',
+            //     dataType: 'json',
+            //     contentType: 'application/json;charset=UTF-8',
+            //     data: JSON.stringify({
+            //         userName: guestName,
+            //         timeStamp: times,
+            //         cursorPosition: position,
+            //         lastGreatestSequenceNumber: lastReceivedGreatestSeqNum
+            //     }),
+            //     success: function (data) {
+            //         if (data != 'None') {
+            //             console.log("heartbeat sent and received : User Count : " + data.userCount);
+            //             console.log("heartbeat sent and received : User Position : " + data.userPosition);
+            //             if (typeof(Storage) !== "undefined") {
+            //                 localStorage.setItem("userCount", parseInt(data.userCount));
+            //             }
+            //             $.each(data.transactions, function (key, value) {
+            //                 var id = value.id;
+            //                 $.each(value.changes, function (k, v) {
+            //
+            //                 });
+            //             });
+            //         }
+            //     }
+            // });
         }
+        ,
+        1000
+    ); //every 5 seconds
+}
+
+function performTasksForGuest(guestName) {
+    document.getElementById("invalidGuestName").style.display = "none";
+    document.getElementById("loginSection").style.display = "none";
+    document.getElementById("textareaSection").style.display = "block";
+    document.getElementById('textarea').value = "";
+    document.getElementById('textarea').addEventListener("keypress", insertText);
+    document.getElementById('textarea').addEventListener("keydown", deleteText);
+    document.getElementById('textarea').addEventListener("paste", detectPaste);
+    document.getElementById("displayName").textContent = guestName;
+    lastReceivedGreatestSeqNum = -1;
+    heartbeat(guestName);
+}
+
+function loginAsGuest() {
+    var guestName = document.getElementById("UserName").value;
+    $.ajax({
+        url: '/login',
+        type: 'POST',
+        dataType: 'json',
+        contentType: "application/json;charset=UTF-8",
+        data: JSON.stringify({userName: guestName}),
+        success: function (data, sStatus, jqXHR) {
+            if (data == "invalid") {
+                document.getElementById("invalidGuestName").style.display = "block";
+            } else {
+                console.log("User Count : " + data.userCount + ", User pos : " + data.userPosition);
+                if (typeof(Storage) !== "undefined") {
+                    localStorage.setItem("userCount", parseInt(data.userCount));
+                    localStorage.setItem("userPosition", parseInt(data.userPosition));
+                }
+                createCookie("guestCookie", guestName, 1);
+                performTasksForGuest(guestName);
+            }
+        }
+    });
+}
+
+
+function logOut() {
+    document.getElementById("loginSection").style.display = "block";
+    document.getElementById("textareaSection").style.display = "none";
+    localStorage.removeItem("userCount");
+    localStorage.removeItem("userPosition");
+    clearTimeout(heartBeatSetTimeout);
+    var cookies = document.cookie.split(";");
+    for (var i = 0; i < cookies.length; i++) {
+        eraseCookie(cookies[i].split("=")[0]);
+    }
+    $.ajax({
+        url: '/deinitializeCall',
+        type: 'POST',
+        dataType: 'json',
+        contentType: "application/json;charset=UTF-8",
+        data: JSON.stringify({userName: ''}),
+        success: function (data, sStatus, jqXHR) {
+            console.log(data);
+        }
+    });
+}
+
+function clearText() {
+    $.ajax({
+        url: '/clearTextArea',
+        type: 'POST',
+        dataType: 'json',
+        contentType: "application/json;charset=UTF-8",
+        data: JSON.stringify({userName: ''}),
+        success: function (data, sStatus, jqXHR) {
+            console.log("cleared");
+        }
+    });
+}
