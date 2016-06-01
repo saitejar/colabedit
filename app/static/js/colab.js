@@ -239,6 +239,7 @@ var PPS = function () {
                 }
             }
             console.log('Here is the text: ' +curText + ' - ');
+            document.getElementById("textarea").value = curText;
             return curText;
         }
     }
