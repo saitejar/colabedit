@@ -329,7 +329,7 @@ window.onload = function () {
                                     PPS.attach(k, v);
                                     var currentCurPos = document.getElementById("textarea").editor.getSelectedRange()[0];
                                     document.getElementById("textarea").value = PPS.piece(0, 1);
-                                    
+
                                 });
                             });
                         }
