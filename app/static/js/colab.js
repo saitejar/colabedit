@@ -262,8 +262,7 @@ function heartbeat(guestName) {
                 data: JSON.stringify({
                     userName: guestName,
                     timeStamp: times,
-                    cursorPosition: position,
-                    lastGreatestSequenceNumber: lastReceivedGreatestSeqNum
+                    cursorPosition: position
                 }),
                 success: function (data) {
                     if (data != 'None') {
