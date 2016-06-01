@@ -4,7 +4,7 @@
 
 
 var recentVersion = 0;
-var pendingChanges = [];
+var pendingChanges = new Map();
 var sentChanges = [];
 var curDocText = '';
 var ppsTags = [0, 1];
@@ -13,70 +13,11 @@ var ppsAck = new Map();
 
 var acknowledged = true;
 
-window.onbeforeunload = function (e) {
-    if (typeof(Storage) !== "undefined") {
-        localStorage.setItem("pendingChanges", pendingChanges);
-        localStorage.setItem("sentChanges", sentChanges);
-        localStorage.setItem("ppsTags", ppsTags.toArray());
-        localStorage.setItem("ppsAck", ppsAck);
-        localStorage.setItem("pps", pps);
-        localStorage.setItem("lastReceivedGreatestSeqNum", lastReceivedGreatestSeqNum);
-    }
-};
-
-window.onload = function () {
-    if (getCookie("guestCookie") != "") {
-        if (typeof(Storage) !== "undefined") {
-
-            if (localStorage.getItem("pendingChanges") != null) {
-                pendingChanges = localStorage.getItem("pendingChanges");
-                console.log("loaded pending changes from local storage : " + pendingChanges);
-            }
-
-            if (localStorage.getItem("sentChanges") != null) {
-                sentChanges = localStorage.getItem("sentChanges");
-                console.log("loaded pending changes from local storage : " + sentChanges);
-            }
-
-            if (localStorage.getItem("ppsTags") != null) {
-                var t1 = localStorage.getItem("ppsTags");
-                var t2 = t1.split(",");
-                ppsTags = t2.splice();
-                console.log("loaded ppsTags from local storage : " + ppsTags);
-            }
-
-            if (localStorage.getItem("ppsAck") != null) {
-                ppsAck = localStorage.getItem("ppsAck");
-                console.log("loaded ppsAck from local storage : " + ppsAck);
-            }
-
-            if (localStorage.getItem("pps") != null) {
-                pps = localStorage.getItem("pps");
-                console.log("loaded pps from local storage : " + pps);
-            }
-
-            if (localStorage.getItem("lastReceivedGreatestSeqNum") != null) {
-                lastReceivedGreatestSeqNum = localStorage.getItem("lastReceivedGreatestSeqNum");
-                console.log("loaded lgsn from local storage : " + lastReceivedGreatestSeqNum);
-            } else {
-                lastReceivedGreatestSeqNum = 0;
-            }
-
-
-            document.getElementById("textarea").value = localStorage.getItem("textAreaValue");
-        }
-    }
-};
-
 var insertText = function (event) {
     var ch = event.charCode;
     var pos = document.getElementById("textarea").editor.getSelectedRange()[0];
     var tag = PPS.insert(pos, ch);
-    pendingChanges.push({'insert': [tag, ch]});
-    if (typeof(Storage) !== "undefined") {
-        localStorage.setItem("textAreaValue", document.getElementById("textarea").value);
-    }
-
+    pendingChanges.set('insert', [tag, ch]);
 };
 
 var deleteText = function (event) {
@@ -90,32 +31,18 @@ var deleteText = function (event) {
             PPS.delete(p);
         }
         if (pos[0] == pos[1]) {
-            pendingChanges.push({'delete': [pos[0], pos[1]]})
+            pendingChanges.set('delete', [pos[0], pos[1]])
         }
         else {
-            pendingChanges.push({'delete': [pos[0], pos[1] - 1]})
+            pendingChanges.set('delete', [pos[0], pos[1]-1])
         }
     }// backspace
+;
 
-    var curlenPendingChanges = pendingChanges.length;
+    sentChanges = new Map();
 
-    sentChanges = [];
-
-    if (typeof(Storage) !== "undefined") {
-        localStorage.setItem("pendingChanges", pendingChanges);
-        localStorage.setItem("sentChanges", sentChanges);
-    }
-
-    for (counter = 0; counter < curlenPendingChanges; counter++) {
-        sentChanges.push(pendingChanges.shift());
-        if (typeof(Storage) !== "undefined") {
-            localStorage.setItem("sentChanges", sentChanges);
-        }
-    }
-
-    if (typeof(Storage) !== "undefined") {
-        localStorage.setItem("pendingChanges", pendingChanges);
-        localStorage.setItem("sentChanges", sentChanges);
+    for (key in pendingChanges.keys()) {
+        sentChanges.set(key, pendingChanges.get(key));
     }
 
     $.ajax({
@@ -148,9 +75,6 @@ var deleteText = function (event) {
         }
     });
 
-    if (typeof(Storage) !== "undefined") {
-        localStorage.setItem("textAreaValue", document.getElementById("textarea").value);
-    }
 };
 
 var pasteText = function (pasteInfo) {
@@ -158,11 +82,9 @@ var pasteText = function (pasteInfo) {
     for (var step = pasteInfo.start; step <= pasteInfo.end; step++) {
         ch = pasteInfo.text.charCodeAt(step - pasteInfo.start);
         tag = PPS.insert(step, ch);
-        pendingChanges.push({'insert': [tag, ch]});
+        pendingChanges.set('insert', [tag, ch]);
     }
-    if (typeof(Storage) !== "undefined") {
-        localStorage.setItem("textAreaValue", document.getElementById("textarea").value);
-    }
+
 };
 
 var detectPaste = function (e) {
@@ -295,8 +217,4 @@ var PPS = function () {
             return curText;
         }
     }
-
-    localStorage.setItem("ppsTags", ppsTags);
-    localStorage.setItem("ppsAck", ppsAck);
-    localStorage.setItem("pps", pps);
 }();

@@ -65,7 +65,7 @@ def deinitialize():
 @router.route('/sendChanges', methods=['POST'])
 def insertText():
     response = make_response(json.dumps('success'), 200)
-    print request.json['changesToBePushed']
+
     pendingChanges = request.json['changesToBePushed']
     pps = PPS()
     for key in pendingChanges.keys():
