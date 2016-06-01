@@ -74,6 +74,7 @@ def insertText():
     users = UserOrder()
     id = users.get_change_id()
     users.changes[id] = json.dumps(pendingChanges)
-    response = make_response(json.dumps('OK'), 200)
+    reply = {'id': id}
+    response = make_response(json.dumps(reply), 200)
     response.headers['Content-Type'] = 'application/json;charset=UTF-8'
     return response

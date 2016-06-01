@@ -7,10 +7,14 @@ var recentVersion = 0;
 var pendingChanges = {};
 
 var curDocText = '';
-var ppsTags = [0, 1];
+var ppsTags = ['0', '1'];
 var pps = new Map();
 var ppsAck = new Map();
-
+pps.set('0', 0);
+pps.set('1', 0);
+ppsAck.set('0', true);
+ppsAck.set('1', true);
+ppsTags.sort();
 var acknowledged = true;
 
 var insertText = function (event) {
@@ -83,20 +87,15 @@ function getTextAreaSelection(textarea) {
 }
 
 var PPS = function () {
-    ppsTags.sort();
-    pps.set(0, 0);
-    pps.set(1, 0);
-    ppsAck.set(0, true);
-    ppsAck.set(1, true);
     return {
 
         hide: function (tag) {
+            tag = String(tag);
             pps.set(tag, 0);
             ppsAck.set(tag, false);
         },
 
         delete: function (pos) {
-            console.log('helloo');
             var count = 0;
             var found = false;
             var tag;
@@ -118,13 +117,18 @@ var PPS = function () {
             return null
         },
         attach: function(tag, ch) {
-            pps.set(tag, ch);
+            tag = String(tag);
             ppsAck.set(tag, true);
-            ppsTags.push(tag);
-            ppsTags.sort();
+            if(ppsTags.indexOf(tag)<0) {
+                pps.set(tag, ch);
+                ppsTags.push(tag);
+                ppsTags.sort();
+            }
         },
         add: function (tagx, tagy, ch) {
-            var tag = (tagx + tagy) / 2;
+            tagx = parseFloat(tagx);
+            tagy = parseFloat(tagy);
+            var tag = String((tagx + tagy) / 2);
             pps.set(tag, ch);
             ppsTags.push(tag);
             ppsTags.sort();
@@ -154,32 +158,32 @@ var PPS = function () {
                 var left = ppsTags.slice(0, lB).reverse();
                 for (tag in left) {
                     if (ppsAck.get(left[tag]) == true) {
-                        lAck = left[tag];
+                        lAck = parseFloat(left[tag]);
                         break;
                     }
                 }
-                ltag = ppsTags[lB];
-                rtag = lAck + (index + 1) * (ppsTags[rB] - lAck) / numClients;
+                ltag = parseFloat(ppsTags[lB]);
+                rtag = lAck + (index + 1) * (parseFloat(ppsTags[rB]) - lAck) / numClients;
 
             }
             else if (ppsAck.get(ppsTags[lB]) == true && ppsAck.get(ppsTags[rB]) == false) {
                 var right = ppsTags.slice(rB + 1, ppsTags.length);
                 for (tag in right) {
                     if (ppsAck.get(right[tag]) == true) {
-                        rAck = right[tag];
+                        rAck = parseFloat(right[tag]);
                         break;
                     }
                 }
-                rtag = ppsTags[rB];
-                ltag = ppsTags[lB] + index * (rAck - ppsTags[lB]) / numClients;
+                rtag = parseFloat(ppsTags[rB]);
+                ltag = parseFloat(ppsTags[lB]) + index * (rAck - parseFloat(ppsTags[lB])) / numClients;
             }
             else if (ppsAck.get(ppsTags[lB]) == true && ppsAck.get(ppsTags[rB]) == true) {
-                ltag = ppsTags[lB] + index * (ppsTags[rB] - ppsTags[lB]) / numClients;
-                rtag = ppsTags[lB] + (index+1) * (ppsTags[rB] - ppsTags[lB]) / numClients;
+                ltag = parseFloat(ppsTags[lB]) + index * (parseFloat(ppsTags[rB]) - parseFloat(ppsTags[lB])) / numClients;
+                rtag = parseFloat(ppsTags[lB]) + (index+1) * (parseFloat(ppsTags[rB]) - parseFloat(ppsTags[lB])) / numClients;
             }
             else if (ppsAck.get(ppsTags[lB]) == false && ppsAck.get(ppsTags[rB]) == false) {
-                ltag = ppsTags[lB];
-                rtag = ppsTags[rB];
+                ltag = parseFloat(ppsTags[lB]);
+                rtag = parseFloat(ppsTags[rB]);
             }
             else{
 
@@ -192,18 +196,21 @@ var PPS = function () {
         },
 
         piece: function (lb, ub) {
-            var lP = ppsTags.indexOf(lb), rP = ppsTags.indexOf(ub), tag;
-            if (lP < 0 && rP < 0) {
+            //console.log('tags text : ' + JSON.stringify(pps));
+            ppsTags.sort();
+            var lP = ppsTags.indexOf(String(lb)), rP = ppsTags.indexOf(String(ub)), tag;
+            if (lP < 0 || rP < 0) {
                 return null;
             }
             var curText = "";
             var slice = ppsTags.slice(lP, rP + 1)
-            for (tag in slice) {
-                tag = slice[tag];
+            for (var t in slice) {
+                tag = slice[t];
                 if (pps.get(tag) != 0) {
                     curText += String.fromCharCode(pps.get(tag));
                 }
             }
+            console.log('Here is the text: ' +curText + ' - ');
             return curText;
         }
     }
@@ -268,11 +275,11 @@ function deleteChar(event) {
 }
 
 function heartbeat(guestName) {
-    heartBeatSetTimeout = setInterval(function () {
+    var heartBeatSetTimeout = setInterval(function () {
             var times = new Date().getTime();
             var position = document.getElementById("textarea").editor.getSelectedRange()[0];
             // document.getElementById("textarea").value = PPS.piece(0, 1);
-            console.log("TEXT MERGED : " + PPS.piece(0, 1));
+            PPS.piece(0,1);
             $.ajax({
                 url: '/heartbeat',
                 type: 'POST',
@@ -320,13 +327,13 @@ function heartbeat(guestName) {
 }
 
 window.onload = function () {
-    sendChangesSetTimeout = setInterval(function () {
+    var sendChangesSetTimeout = setInterval(function () {
             var times = new Date().getTime();
             var position = document.getElementById("textarea").editor.getSelectedRange()[0];
             if (acknowledged == true && Object.keys(pendingChanges).length > 0) {
 
                 acknowledged = false;
-                sentChanges = {};
+                var sentChanges = {};
                 console.log("pending: " + pendingChanges);
                 for (key in pendingChanges) {
                     sentChanges[key] = pendingChanges[key];
@@ -337,7 +344,6 @@ window.onload = function () {
                     url: '/sendChanges',
                     type: 'POST',
                     dataType: 'json',
-                    dataType: 'json',
                     timeout: 3000,
                     tryCounter: 0,
                     retryLimit: 10,
@@ -347,7 +353,7 @@ window.onload = function () {
                     }),
                     success: function (data, sStatus, jqXHR) {
                         acknowledged = true;
-                        console.log("(insert) successfully sent and received the message in send changess: " + data);
+                        console.log("(insert) successfully sent and received the message in send changes: " + data);
 
 
                     },
@@ -373,7 +379,7 @@ window.onload = function () {
         ,
         1000
     );
-}
+};
 
 function performTasksForGuest(guestName) {
     document.getElementById("invalidGuestName").style.display = "none";
