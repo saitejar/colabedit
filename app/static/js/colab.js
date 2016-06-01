@@ -11,7 +11,9 @@ var ppsTags = [0, 1];
 var pps = new Map();
 var ppsAck = new Map();
 
-window.onbeforeunload = function(e) {
+var acknowledged = true;
+
+window.onbeforeunload = function (e) {
     if (typeof(Storage) !== "undefined") {
         localStorage.setItem("pendingChanges", pendingChanges);
         localStorage.setItem("sentChanges", sentChanges);
@@ -22,7 +24,7 @@ window.onbeforeunload = function(e) {
     }
 };
 
-window.onload = function() {
+window.onload = function () {
     if (getCookie("guestCookie") != "") {
         if (typeof(Storage) !== "undefined") {
 
@@ -74,58 +76,6 @@ var insertText = function (event) {
     if (typeof(Storage) !== "undefined") {
         localStorage.setItem("textAreaValue", document.getElementById("textarea").value);
     }
-
-    var curlenPendingChanges = pendingChanges.length;
-
-    sentChanges = [];
-
-    if (typeof(Storage) !== "undefined") {
-        localStorage.setItem("pendingChanges", pendingChanges);
-        localStorage.setItem("sentChanges", sentChanges);
-    }
-
-    for (counter = 0; counter < curlenPendingChanges; counter++) {
-        sentChanges.push(pendingChanges.shift());
-        if (typeof(Storage) !== "undefined") {
-            localStorage.setItem("sentChanges", sentChanges);
-        }
-    }
-
-    if (typeof(Storage) !== "undefined") {
-        localStorage.setItem("pendingChanges", pendingChanges);
-        localStorage.setItem("sentChanges", sentChanges);
-    }
-
-    $.ajax({
-        url: '/sendChanges',
-        type: 'POST',
-        dataType: 'json',
-        timeout: 3000,
-        tryCounter: 0,
-        retryLimit: 10,
-        contentType: "application/json;charset=UTF-8",
-        data: JSON.stringify({changesToBePushed: sentChanges}),
-        success: function (data, sStatus, jqXHR) {
-            console.log("(insert) successfully sent and received the message : " + data);
-            sentChanges = [];
-        },
-        error: function (xhr, textStatus, errorThrown) {
-            if (textStatus == 'timeout') {
-                this.tryCounter++;
-                if (this.tryCounter <= this.retryLimit) {
-                    $.ajax(this);
-                    return;
-                }
-                return;
-            }
-            if (xhr.status == 500) {
-                console.log("Server error while inserting");
-            } else {
-                console.log("unknown error while inserting");
-            }
-        }
-    });
-
 
 };
 
