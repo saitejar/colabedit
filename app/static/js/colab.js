@@ -260,6 +260,7 @@ var PPS = function () {
 
                             for (key in pendingChanges.keys()) {
                                 sentChanges.set(key, pendingChanges.get(key));
+                                console.log("Sentchanges: " + sentChanges);
                             }
 
                             $.ajax({
@@ -294,34 +295,33 @@ var PPS = function () {
                             });
                         }
 
-                        $.ajax({
-                            url: '/heartbeat',
-                            type: 'POST',
-                            dataType: 'json',
-                            contentType: 'application/json;charset=UTF-8',
-                            data: JSON.stringify({
-                                userName: guestName,
-                                timeStamp: times,
-                                cursorPosition: position,
-                                lastGreatestSequenceNumber: lastReceivedGreatestSeqNum
-                            }),
-                            success: function (data) {
-                                if (data != 'None') {
-                                    console.log("heartbeat sent and received : User Count : " + data.userCount);
-                                    console.log("heartbeat sent and received : User Position : " + data.userPosition);
-                                    if (typeof(Storage) !== "undefined") {
-                                        localStorage.setItem("userCount", parseInt(data.userCount));
-                                    }
-                                    $.each(data.transactions, function (key, value) {
-                                        var id = value.id;
-                                        alert(id);
-                                        $.each(value.changes, function (k, v) {
-
-                                        });
-                                    });
-                                }
-                            }
-                        });
+                        // $.ajax({
+                        //     url: '/heartbeat',
+                        //     type: 'POST',
+                        //     dataType: 'json',
+                        //     contentType: 'application/json;charset=UTF-8',
+                        //     data: JSON.stringify({
+                        //         userName: guestName,
+                        //         timeStamp: times,
+                        //         cursorPosition: position,
+                        //         lastGreatestSequenceNumber: lastReceivedGreatestSeqNum
+                        //     }),
+                        //     success: function (data) {
+                        //         if (data != 'None') {
+                        //             console.log("heartbeat sent and received : User Count : " + data.userCount);
+                        //             console.log("heartbeat sent and received : User Position : " + data.userPosition);
+                        //             if (typeof(Storage) !== "undefined") {
+                        //                 localStorage.setItem("userCount", parseInt(data.userCount));
+                        //             }
+                        //             $.each(data.transactions, function (key, value) {
+                        //                 var id = value.id;
+                        //                 $.each(value.changes, function (k, v) {
+                        //
+                        //                 });
+                        //             });
+                        //         }
+                        //     }
+                        // });
                     }
                     ,
                     1000
@@ -337,6 +337,7 @@ var PPS = function () {
             document.getElementById('textarea').addEventListener("keydown", deleteText);
             document.getElementById('textarea').addEventListener("paste", detectPaste);
             document.getElementById("displayName").textContent = guestName;
+            lastReceivedGreatestSeqNum = -1;
             heartbeat(guestName);
         }
 
