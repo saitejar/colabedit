@@ -17,26 +17,30 @@ var insertText = function (event) {
     var ch = event.charCode;
     var pos = document.getElementById("textarea").editor.getSelectedRange()[0];
     var tag = PPS.insert(pos, ch);
-    pendingChanges.set('insert', [tag, ch]);
+    pendingChanges.set(tag, ch);
+    console.log(pendingChanges);
 };
 
 var deleteText = function (event) {
-    var key = event.keyCode;
+    var key = event.keyCode, tag;
     var pos = document.getElementById("textarea").editor.getSelectedRange();
     if (key == 8) {
-        if (pos[0] == 0 && pos[1] == 0) {
-            return;
+        console.log('deleted');
+        if (pos[0] != 0 && pos[1] == pos[0]) {
+            tag = PPS.delete(pos[0]);
+            if(tag != null){
+                pendingChanges.set(tag, 0);
+            }
         }
-        for (var p = pos[0] + 1; p <= pos[1]; p++) {
-            PPS.delete(p);
+        else{
+            for (var p = pos[0] + 1; p <= pos[1]; p++) {
+                tag = PPS.delete(p);
+                if(tag != null){
+                    pendingChanges.set(tag, 0);
+                }
+            }
         }
-        if (pos[0] == pos[1]) {
-            pendingChanges.set('delete', [pos[0], pos[1]])
-        }
-        else {
-            pendingChanges.set('delete', [pos[0], pos[1]-1])
-        }
-    }// backspace
+    }// backspace ?
 };
 
 var pasteText = function (pasteInfo) {
@@ -91,6 +95,7 @@ var PPS = function () {
         },
 
         delete: function (pos) {
+            console.log('helloo');
             var count = 0;
             var found = false;
             var tag;
@@ -103,8 +108,13 @@ var PPS = function () {
                     break;
                 }
             }
-            if (found == true)
+            if (found == true){
+                console.log('here');
                 PPS.hide(ppsTags[count]);
+                return ppsTags[count];
+            }
+            console.log('here1');
+            return null
         },
 
         add: function (tagx, tagy, ch) {

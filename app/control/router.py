@@ -67,10 +67,11 @@ def insertText():
     response = make_response(json.dumps('success'), 200)
 
     pendingChanges = request.json['changesToBePushed']
+    print 'insertText', pendingChanges
     pps = PPS()
     for key in pendingChanges.keys():
         if key == 'insert':
-            pps.attach( pendingChanges[key][0], pendingChanges[key][1])
+            pps.attach(pendingChanges[key][0], pendingChanges[key][1])
         elif key == 'delete':
             pps.hide(pendingChanges[key])
     users = UserOrder()
