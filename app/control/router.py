@@ -23,18 +23,10 @@ def heartbeat():
     cursor_position = request.json['cursorPosition']
     username = request.json['userName']
     timestamp = request.json['timeStamp']
-    print request.json
-    last_received_change = int(request.json['lastGreatestSequenceNumber'])
-    cur_text = PPS().piece(0, 1)
     reply = {}
     users = UserOrder(doc='')
     reply['userCount'] = users.count()
     reply['userPosition'] = users.index(username.lower())
-    reply['transactions'] = {}
-    ids = [int(key) for key in users.changes.keys() if int(key) > last_received_change]
-    for id in ids:
-        reply['transactions'][id] = json.loads(users.changes[id])
-
     response = make_response(json.dumps(reply), 200)
     response.headers['Content-Type'] = 'application/json;charset=UTF-8'
     return response
@@ -65,17 +57,24 @@ def deinitialize():
 @router.route('/sendChanges', methods=['POST'])
 def insertText():
     response = make_response(json.dumps('success'), 200)
-
     pendingChanges = request.json['changesToBePushed']
-    print 'insertText', pendingChanges
     pps = PPS()
     for key in pendingChanges.keys():
         if key == 'insert':
             pps.attach(pendingChanges[key][0], pendingChanges[key][1])
         elif key == 'delete':
             pps.hide(pendingChanges[key])
+
+    last_received_change = int(request.json['lastGreatestSequenceNumber'])
+    reply = {}
+    users = UserOrder(doc='')
+    reply['transactions'] = {}
+    ids = [int(key) for key in users.changes.keys() if int(key) > last_received_change]
+    for id in ids:
+        reply['transactions'][id] = json.loads(users.changes[id])
     users = UserOrder()
     id = users.get_change_id()
     users.changes[id] = json.dumps(pendingChanges)
+    response = make_response(json.dumps(reply), 200)
     response.headers['Content-Type'] = 'application/json;charset=UTF-8'
     return response
