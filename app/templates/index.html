@@ -9,6 +9,235 @@
     <script src="js/colab.js"></script>
     <script src="js/jquery.js"></script>
     <script type="text/javascript" src="js/socketio.js"></script>
+
+    <script>
+
+        var lastReceivedGreatestSeqNum;
+
+        function getCookie(cname) {
+            var name = cname + "=";
+            var ca = document.cookie.split(';');
+            for (var i = 0; i < ca.length; i++) {
+                var c = ca[i];
+                while (c.charAt(0) == ' ') {
+                    c = c.substring(1);
+                }
+                if (c.indexOf(name) == 0) {
+                    return c.substring(name.length, c.length);
+                }
+            }
+            return "";
+        }
+
+        function createCookie(name, value, days) {
+            if (days) {
+                var date = new Date();
+                date.setTime(date.getTime() + (
+                        days * 24 * 60 * 60 * 1000));
+                var expires = "; expires=" + date.toGMTString();
+            }
+            else var expires = "";
+            document.cookie = name + "=" + value + expires + "; path=/";
+        }
+        function eraseCookie(name) {
+            createCookie(name, "", -1);
+        }
+
+        var flag = 0;
+
+        {#        namespace = '/insert';#}
+        {#        socket = io.connect('http://' + document.domain + ':' + location.port + namespace, {'forceNew':true});#}
+        {#        var loc = 'http://' + document.domain + ':' + location.port + namespace, heartBeatSetTimeout;#}
+        {#        console.log('http://' + document.domain + ':' + location.port + namespace);#}
+        {##}
+        {#        socket.on('keyPressEventSocket', function (msg) {#}
+        {#            console.log("Char Code: " + msg.data + ", Position : " + msg.position + ", received SID from server: " + msg.sid + ", and user is " + msg.user);#}
+        {#        });#}
+
+        function insertChar(event) {
+            var keyvalue = event.charCode;
+            var guestUserName = getCookie("guestCookie");
+            var position = document.getElementById("textarea").editor.getSelectedRange()[0];
+            console.log(keyvalue, position);
+            socket.emit('insert', {char: keyvalue, pos: position, userName: guestUserName});
+
+        }
+
+        function deleteChar(event) {
+            var keyvalue = event.keyCode;
+            var guestUserName = getCookie("guestCookie");
+            var position = document.getElementById("textarea").editor.getSelectedRange()[0];
+            if (keyvalue == 8) {
+                console.log(keyvalue, position);
+                socket.emit('insert', {char: keyvalue, pos: position, userName: guestUserName});
+            }// backspace
+            else if (keyvalue == 46) {
+                console.log(keyvalue, position);
+                socket.emit('insert', {char: keyvalue, pos: position, userName: guestUserName});
+            } // delete
+            else {
+                console.log("do nothing");
+            }
+        }
+
+        function heartbeat(guestName) {
+            heartBeatSetTimeout = setInterval(function () {
+                        var times = new Date().getTime();
+                        var position = document.getElementById("textarea").editor.getSelectedRange()[0];
+                        if (acknowledged == true) { //} && pendingChanges.keys.length > 0) {
+                            console.log('send changes');
+                            acknowledged = false;
+                            sentChanges = new Map();
+                            for (key in pendingChanges.keys()) {
+                                sentChanges.set(key, pendingChanges.get(key));
+                                pendingChanges.delete(key);
+                            }
+                            console.log('pending changes left: '+ JSON.stringify(sentChanges, null, 4));
+                            $.ajax({
+                                url: '/sendChanges',
+                                type: 'POST',
+                                dataType: 'json',
+                                timeout: 3000,
+                                tryCounter: 0,
+                                retryLimit: 10,
+                                contentType: "application/json;charset=UTF-8",
+                                data: JSON.stringify({changesToBePushed: sentChanges}),
+                                success: function (data, sStatus, jqXHR) {
+                                    acknowledged = true;
+                                    console.log("(insert) successfully sent and received the message : " + data);
+                                },
+                                error: function (xhr, textStatus, errorThrown) {
+                                    if (textStatus == 'timeout') {
+                                        this.tryCounter++;
+                                        if (this.tryCounter <= this.retryLimit) {
+                                            $.ajax(this);
+                                            return;
+                                        }
+                                        return;
+                                    }
+                                    if (xhr.status == 500) {
+                                        console.log("Server error while inserting");
+                                    } else {
+                                        console.log("unknown error while inserting");
+                                    }
+                                }
+                            });
+                        }
+
+                        $.ajax({
+                            url: '/heartbeat',
+                            type: 'POST',
+                            dataType: 'json',
+                            contentType: 'application/json;charset=UTF-8',
+                            data: JSON.stringify({
+                                userName: guestName,
+                                timeStamp: times,
+                                cursorPosition: position,
+                                lastGreatestSequenceNumber: 0 //lastReceivedGreatestSeqNum
+                            }),
+                            success: function (data) {
+                                if (data != 'None') {
+                                    console.log("heartbeat sent and received : User Count : " + data.userCount);
+                                    console.log("heartbeat sent and received : User Position : " + data.userPosition);
+                                    if (typeof(
+                                                    Storage) !== "undefined") {
+                                        localStorage.setItem("userCount", parseInt(data.userCount));
+                                    }
+                                    $.each(data.transactions, function (key, value) {
+                                        var id = value.id;
+                                        alert(id);
+                                        $.each(value.changes, function (k, v) {
+
+                                        });
+                                    });
+                                }
+                            }
+                        });
+                    }
+                    ,
+                    10000
+            ); //every 5 seconds
+        }
+
+        function performTasksForGuest(guestName) {
+            document.getElementById("invalidGuestName").style.display = "none";
+            document.getElementById("loginSection").style.display = "none";
+            document.getElementById("textareaSection").style.display = "block";
+            document.getElementById('textarea').value = "";
+            document.getElementById('textarea').addEventListener("keypress", insertText);
+            document.getElementById('textarea').addEventListener("keydown", deleteText);
+            document.getElementById('textarea').addEventListener("paste", detectPaste);
+            document.getElementById("displayName").textContent = guestName;
+            heartbeat(guestName);
+        }
+
+        function loginAsGuest() {
+            var guestName = document.getElementById("UserName").value;
+            $.ajax({
+                url: '/login',
+                type: 'POST',
+                dataType: 'json',
+                contentType: "application/json;charset=UTF-8",
+                data: JSON.stringify({userName: guestName}),
+                success: function (data, sStatus, jqXHR) {
+                    if (data == "invalid") {
+                        document.getElementById("invalidGuestName").style.display = "block";
+                    } else {
+                        console.log("User Count : " + data.userCount + ", User pos : " + data.userPosition);
+                        if (typeof(
+                                        Storage) !== "undefined") {
+                            localStorage.setItem("userCount", parseInt(data.userCount));
+                            localStorage.setItem("userPosition", parseInt(data.userPosition));
+                        }
+                        createCookie("guestCookie", guestName, 1);
+                        performTasksForGuest(guestName);
+                    }
+                }
+            });
+        }
+
+
+        function logOut() {
+            document.getElementById("loginSection").style.display = "block";
+            document.getElementById("textareaSection").style.display = "none";
+            localStorage.removeItem("userCount");
+            localStorage.removeItem("userPosition");
+            clearTimeout(heartBeatSetTimeout);
+            var cookies = document.cookie.split(";");
+            for (var i = 0; i < cookies.length; i++) {
+                eraseCookie(cookies[i].split("=")[0]);
+            }
+            $.ajax({
+                url: '/deinitializeCall',
+                type: 'POST',
+                dataType: 'json',
+                contentType: "application/json;charset=UTF-8",
+                data: JSON.stringify({userName: ''}),
+                success: function (data, sStatus, jqXHR) {
+                    console.log(data);
+                }
+            });
+        }
+
+    </script>
+
+    <script type="text/javascript">
+
+        function clearText() {
+            $.ajax({
+                url: '/clearTextArea',
+                type: 'POST',
+                dataType: 'json',
+                contentType: "application/json;charset=UTF-8",
+                data: JSON.stringify({userName: ''}),
+                success: function (data, sStatus, jqXHR) {
+                    console.log("cleared");
+                }
+            });
+        }
+
+
+    </script>
 </head>
 <style>
 
