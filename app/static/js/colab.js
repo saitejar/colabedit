@@ -257,7 +257,8 @@ function heartbeat(guestName) {
     heartBeatSetTimeout = setInterval(function () {
             var times = new Date().getTime();
             var position = document.getElementById("textarea").editor.getSelectedRange()[0];
-            document.getElementById("textarea").value = PPS.piece(0, 1);
+            // document.getElementById("textarea").value = PPS.piece(0, 1);
+            console.log("TEXT MERGED : " + PPS.piece(0, 1));
             $.ajax({
                 url: '/heartbeat',
                 type: 'POST',
@@ -298,7 +299,6 @@ window.onload = function () {
                     delete pendingChanges[key];
                     console.log("Sentchanges: " + key);
                 }
-
                 $.ajax({
                     url: '/sendChanges',
                     type: 'POST',
