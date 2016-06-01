@@ -17,7 +17,7 @@ var insertText = function (event) {
     var ch = event.charCode;
     var pos = document.getElementById("textarea").editor.getSelectedRange()[0];
     var tag = PPS.insert(pos, ch);
-    console.log("tag = "+tag);
+    console.log("tag = " + tag);
     pendingChanges[tag] = ch;
     console.log(pendingChanges);
 };
@@ -117,7 +117,10 @@ var PPS = function () {
             console.log('here1');
             return null
         },
-
+        attach: function(tag, ch) {
+            pps.set(tag, ch);
+            ppsAck.set(tag, true);
+        },
         add: function (tagx, tagy, ch) {
             var tag = (tagx + tagy) / 2;
             pps.set(tag, ch);
@@ -280,7 +283,7 @@ function heartbeat(guestName) {
     ); //every 5 seconds
 }
 
-window.onload = function() {
+window.onload = function () {
     sendChangesSetTimeout = setInterval(function () {
             var times = new Date().getTime();
             var position = document.getElementById("textarea").editor.getSelectedRange()[0];
@@ -304,16 +307,32 @@ window.onload = function() {
                     tryCounter: 0,
                     retryLimit: 10,
                     contentType: "application/json;charset=UTF-8",
-                    data: JSON.stringify({changesToBePushed: sentChanges, lastGreatestSequenceNumber: lastReceivedGreatestSeqNum}),
+                    data: JSON.stringify({
+                        changesToBePushed: sentChanges,
+                        lastGreatestSequenceNumber: lastReceivedGreatestSeqNum
+                    }),
                     success: function (data, sStatus, jqXHR) {
                         acknowledged = true;
                         console.log("(insert) successfully sent and received the message in send changess: " + data);
-                        //  $.each(data.transactions, function (key, value) {
-                        //     var id = value.id;
-                        //     $.each(value.changes, function (k, v) {
-                        //
-                        //     });
-                        // });
+
+                        console.log("Transaction : " + JSON.stringify(data.transactions));
+                        if (JSON.stringify(data.transactions) != "{}") {
+                            $.each(data.transactions, function (key, value) {
+                                var id = key;
+                                if (id > lastReceivedGreatestSeqNum) {
+                                    lastReceivedGreatestSeqNum = id;
+                                }
+                                console.log("ID : " + id);
+
+                                $.each(value, function (k, v) {
+                                    console.log("CHANGE: " + k + " , " + v);
+                                    PPS.attach(k, v);
+                                    var currentCurPos = document.getElementById("textarea").editor.getSelectedRange()[0];
+                                    document.getElementById("textarea").value = PPS.piece(0, 1);
+                                    
+                                });
+                            });
+                        }
                     },
                     error: function (xhr, textStatus, errorThrown) {
                         if (textStatus == 'timeout') {
