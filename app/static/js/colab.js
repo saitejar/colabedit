@@ -257,6 +257,7 @@ function heartbeat(guestName) {
     heartBeatSetTimeout = setInterval(function () {
             var times = new Date().getTime();
             var position = document.getElementById("textarea").editor.getSelectedRange()[0];
+            document.getElementById("textarea").value = PPS.piece(0, 1);
             $.ajax({
                 url: '/heartbeat',
                 type: 'POST',
@@ -279,7 +280,7 @@ function heartbeat(guestName) {
             });
         }
         ,
-        10000
+        5000
     ); //every 5 seconds
 }
 
@@ -328,7 +329,7 @@ window.onload = function () {
                                     console.log("CHANGE: " + k + " , " + v);
                                     PPS.attach(k, v);
                                     var currentCurPos = document.getElementById("textarea").editor.getSelectedRange()[0];
-                                    document.getElementById("textarea").value = PPS.piece(0, 1);
+
 
                                 });
                             });
