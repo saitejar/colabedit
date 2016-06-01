@@ -304,7 +304,7 @@ window.onload = function() {
                     tryCounter: 0,
                     retryLimit: 10,
                     contentType: "application/json;charset=UTF-8",
-                    data: JSON.stringify({changesToBePushed: sentChanges}),
+                    data: JSON.stringify({changesToBePushed: sentChanges, lastGreatestSequenceNumber: lastReceivedGreatestSeqNum}),
                     success: function (data, sStatus, jqXHR) {
                         acknowledged = true;
                         console.log("(insert) successfully sent and received the message in send changess: " + data);
