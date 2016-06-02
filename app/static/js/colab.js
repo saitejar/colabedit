@@ -457,6 +457,14 @@ function getUserNames() {
                 }),
                 success: function (data, sStatus, jqXHR) {
                     console.log("USERS " + JSON.stringify(data));
+                    document.getElementById("userNames").innerHTML = "";
+                    for(var i = 0; i < data.length; i++){
+                        document.getElementById("userNames").innerHTML += "<b>"
+                        document.getElementById("userNames").innerHTML += data[i];
+                        document.getElementById("userNames").innerHTML += "</b>"
+                        document.getElementById("userNames").innerHTML += "<br/>"
+                    }
+
                 },
                 error: function (xhr, textStatus, errorThrown) {
                     if (textStatus == 'timeout') {

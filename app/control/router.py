@@ -41,7 +41,6 @@ def heartbeat():
 def sendUserNames():
     users = UserOrder(doc='')
     response = make_response(json.dumps(users.users.keys()), 200)
-    print "!!!!!!!!!!!!!!!" + str(users.users.keys())
     response.headers['Content-Type'] = 'application/json;charset=UTF-8'
     return response
 
