@@ -3,15 +3,21 @@
  */
 
 function logOut() {
-
+    var guestUserName = document.getElementById("UserName").value;
     document.getElementById("loginSection").style.display = "block";
     document.getElementById("textareaSection").style.display = "none";
     localStorage.removeItem("userCount");
     localStorage.removeItem("userPosition");
-    clearTimeout(heartBeatSetTimeout);
-    clearTimeout(sendChangesSetTimeout);
+    if (typeof heartBeatSetTimeout !== 'undefined') {
+        clearTimeout(heartBeatSetTimeout);
+    }
+    if (typeof sendChangesSetTimeout !== 'undefined') {
+        clearTimeout(sendChangesSetTimeout);
+    }
+    if (typeof getUserNamesSetTimeout !== 'undefined') {
+        clearTimeout(getUserNamesSetTimeout);
+    }
 
-    alert("hi");
     var cookies = document.cookie.split(";");
     for (var i = 0; i < cookies.length; i++) {
         eraseCookie(cookies[i].split("=")[0]);
@@ -22,13 +28,12 @@ function logOut() {
         type: 'POST',
         dataType: 'json',
         contentType: "application/json;charset=UTF-8",
-        data: JSON.stringify({userName: ''}),
+        data: JSON.stringify({userName: guestUserName}),
         success: function (data, sStatus, jqXHR) {
             console.log(data);
         }
     });
 }
-
 
 
 var recentVersion = 0;
@@ -123,13 +128,13 @@ var PPS = function () {
             ppsAck.set(tag, false);
         },
 
-        index: function(tag){
+        index: function (tag) {
             ppsTags.sort();
-            var pos=0;
-            for(var t in ppsTags){
-                if(ppsTags[t] == tag)
+            var pos = 0;
+            for (var t in ppsTags) {
+                if (ppsTags[t] == tag)
                     return t;
-                if(ppsTags[t]!=0){
+                if (ppsTags[t] != 0) {
                     pos += 1;
                 }
             }
@@ -157,20 +162,20 @@ var PPS = function () {
             console.log('here1');
             return null
         },
-        attach: function(tag, ch) {
+        attach: function (tag, ch) {
             tag = String(tag);
             var element = document.querySelector("trix-editor"), pos;
             ppsAck.set(tag, true);
-            if(ppsTags.indexOf(tag)<0) {
+            if (ppsTags.indexOf(tag) < 0) {
                 pps.set(tag, ch);
                 ppsTags.push(tag);
                 ppsTags.sort();
                 pos = PPS.index(tag);
-                element.editor.setSelectedRange([pos-1, pos-1]);
+                element.editor.setSelectedRange([pos - 1, pos - 1]);
                 element.editor.insertString(String.fromCharCode(ch));
             }
             else {
-                if(pps[tag] != ch && ch==0){
+                if (pps[tag] != ch && ch == 0) {
                     pos = PPS.index(tag);
                     element.editor.setSelectedRange([pos, pos]);
                     element.editor.deleteInDirection("backward");
@@ -232,13 +237,13 @@ var PPS = function () {
             }
             else if (ppsAck.get(ppsTags[lB]) == true && ppsAck.get(ppsTags[rB]) == true) {
                 ltag = parseFloat(ppsTags[lB]) + index * (parseFloat(ppsTags[rB]) - parseFloat(ppsTags[lB])) / numClients;
-                rtag = parseFloat(ppsTags[lB]) + (index+1) * (parseFloat(ppsTags[rB]) - parseFloat(ppsTags[lB])) / numClients;
+                rtag = parseFloat(ppsTags[lB]) + (index + 1) * (parseFloat(ppsTags[rB]) - parseFloat(ppsTags[lB])) / numClients;
             }
             else if (ppsAck.get(ppsTags[lB]) == false && ppsAck.get(ppsTags[rB]) == false) {
                 ltag = parseFloat(ppsTags[lB]);
                 rtag = parseFloat(ppsTags[rB]);
             }
-            else{
+            else {
 
             }
             if (found == true) {
@@ -264,7 +269,7 @@ var PPS = function () {
                     curText += String.fromCharCode(pps.get(tag));
                 }
             }
-            console.log('Here is the text: ' +curText + ' - ');
+            console.log('Here is the text: ' + curText + ' - ');
             document.getElementById("textarea").value = curText;
             return curText;
         }
@@ -330,11 +335,11 @@ function deleteChar(event) {
 }
 
 function heartbeat(guestName) {
+
     var heartBeatSetTimeout = setInterval(function () {
             var times = new Date().getTime();
             var position = document.getElementById("textarea").editor.getSelectedRange()[0];
-            // document.getElementById("textarea").value = PPS.piece(0, 1);
-            PPS.piece(0,1);
+            PPS.piece(0, 1);
             $.ajax({
                 url: '/heartbeat',
                 type: 'POST',
@@ -350,6 +355,7 @@ function heartbeat(guestName) {
                     if (data != 'None') {
                         console.log("heartbeat sent and received : User Count : " + data.userCount);
                         console.log("heartbeat sent and received : User Position : " + data.userPosition);
+                        console.log("ENTIRE : " + JSON.stringify(data));
                         if (typeof(Storage) !== "undefined") {
                             localStorage.setItem("userCount", parseInt(data.userCount));
                             localStorage.setItem("userPosition", parseInt(data.userPosition));
@@ -436,6 +442,44 @@ function startSendChanges() {
     );
 };
 
+function getUserNames() {
+    var getUserNamesSetTimeout = setInterval(function () {
+            $.ajax({
+                url: '/sendUserNames',
+                type: 'POST',
+                dataType: 'json',
+                timeout: 3000,
+                tryCounter: 0,
+                retryLimit: 10,
+                contentType: "application/json;charset=UTF-8",
+                data: JSON.stringify({
+                    id: ''
+                }),
+                success: function (data, sStatus, jqXHR) {
+                    console.log("USERS " + JSON.stringify(data));
+                },
+                error: function (xhr, textStatus, errorThrown) {
+                    if (textStatus == 'timeout') {
+                        this.tryCounter++;
+                        if (this.tryCounter <= this.retryLimit) {
+                            $.ajax(this);
+                            return;
+                        }
+                        return;
+                    }
+                    if (xhr.status == 500) {
+                        console.log("Server error while inserting");
+                    } else {
+                        console.log("unknown error while inserting");
+                    }
+                }
+            });
+        }
+        ,
+        10000
+    );
+};
+
 function performTasksForGuest(guestName) {
     document.getElementById("invalidGuestName").style.display = "none";
     document.getElementById("loginSection").style.display = "none";
@@ -448,10 +492,14 @@ function performTasksForGuest(guestName) {
     lastReceivedGreatestSeqNum = -1;
     heartbeat(guestName);
     startSendChanges();
+    getUserNames();
 }
 
+
 function loginAsGuest() {
-    var guestName = document.getElementById("UserName").value;
+    var
+        guestName = document.getElementById("UserName").value;
+
     $.ajax({
         url: '/login',
         type: 'POST',
@@ -473,7 +521,6 @@ function loginAsGuest() {
         }
     });
 }
-
 
 
 function clearText() {

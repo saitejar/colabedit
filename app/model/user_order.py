@@ -17,16 +17,16 @@ class UserOrder:
             self.users[user.lower()] = numberOfUsers
 
     def remove(self, user):
-        # self.users.pop(self.users.index(user))
+        self.users.pop(self.users.index(user))
         print self.users
 
     def count(self):
         return len(self.users)
 
     def index(self, user):
-        try:
-            return self.users[user.lower()]
-        except:
+        if user in self.users.keys():
+            return self.users[user]
+        else:
             return -1
 
     def get_change_id(self):

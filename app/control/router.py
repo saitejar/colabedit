@@ -37,6 +37,14 @@ def heartbeat():
     response.headers['Content-Type'] = 'application/json;charset=UTF-8'
     return response
 
+@router.route('/sendUserNames', methods=['POST'])
+def sendUserNames():
+    users = UserOrder(doc='')
+    response = make_response(json.dumps(users.users.keys()), 200)
+    print "!!!!!!!!!!!!!!!" + str(users.users.keys())
+    response.headers['Content-Type'] = 'application/json;charset=UTF-8'
+    return response
+
 
 @router.route('/login', methods=['POST'])
 def initialize():
@@ -54,11 +62,17 @@ def initialize():
 
 @router.route('/deinitializeCall', methods=['POST'])
 def deinitialize():
-    response = make_response(json.dumps('deinitialized successfully'), 200)
-    username = request.json['userName']
-    response.headers['Content-Type'] = 'application/json;charset=UTF-8'
-    return response
-
+    try:
+        response = make_response(json.dumps('deinitialized successfully'), 200)
+        username = request.json['userName']
+        if username != "":
+            UserOrder(doc='').remove(username)
+        response.headers['Content-Type'] = 'application/json;charset=UTF-8'
+        return response
+    except:
+        response = make_response(json.dumps('deinitialized successfully'), 200)
+        response.headers['Content-Type'] = 'application/json;charset=UTF-8'
+        return response
 
 @router.route('/sendChanges', methods=['POST'])
 def insertText():
