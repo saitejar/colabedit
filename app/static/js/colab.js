@@ -2,6 +2,34 @@
  * Created by ranuva on 5/28/16.
  */
 
+function logOut() {
+
+    document.getElementById("loginSection").style.display = "block";
+    document.getElementById("textareaSection").style.display = "none";
+    localStorage.removeItem("userCount");
+    localStorage.removeItem("userPosition");
+    clearTimeout(heartBeatSetTimeout);
+    clearTimeout(sendChangesSetTimeout);
+
+    alert("hi");
+    var cookies = document.cookie.split(";");
+    for (var i = 0; i < cookies.length; i++) {
+        eraseCookie(cookies[i].split("=")[0]);
+    }
+
+    $.ajax({
+        url: '/deinitializeCall',
+        type: 'POST',
+        dataType: 'json',
+        contentType: "application/json;charset=UTF-8",
+        data: JSON.stringify({userName: ''}),
+        success: function (data, sStatus, jqXHR) {
+            console.log(data);
+        }
+    });
+}
+
+
 
 var recentVersion = 0;
 var pendingChanges = {};
@@ -352,7 +380,7 @@ function heartbeat(guestName) {
     ); //every 5 seconds
 }
 
-window.onload = function () {
+function startSendChanges() {
     var sendChangesSetTimeout = setInterval(function () {
             var times = new Date().getTime();
             var position = document.getElementById("textarea").editor.getSelectedRange()[0];
@@ -418,6 +446,7 @@ function performTasksForGuest(guestName) {
     document.getElementById("displayName").textContent = guestName;
     lastReceivedGreatestSeqNum = -1;
     heartbeat(guestName);
+    startSendChanges();
 }
 
 function loginAsGuest() {
@@ -445,27 +474,6 @@ function loginAsGuest() {
 }
 
 
-function logOut() {
-    document.getElementById("loginSection").style.display = "block";
-    document.getElementById("textareaSection").style.display = "none";
-    localStorage.removeItem("userCount");
-    localStorage.removeItem("userPosition");
-    clearTimeout(heartBeatSetTimeout);
-    var cookies = document.cookie.split(";");
-    for (var i = 0; i < cookies.length; i++) {
-        eraseCookie(cookies[i].split("=")[0]);
-    }
-    $.ajax({
-        url: '/deinitializeCall',
-        type: 'POST',
-        dataType: 'json',
-        contentType: "application/json;charset=UTF-8",
-        data: JSON.stringify({userName: ''}),
-        success: function (data, sStatus, jqXHR) {
-            console.log(data);
-        }
-    });
-}
 
 function clearText() {
     $.ajax({
@@ -479,3 +487,16 @@ function clearText() {
         }
     });
 }
+
+  if (getCookie("guestCookie") != "") {
+        performTasksForGuest(getCookie("guestCookie"));
+    } else {
+        document.getElementById("loginSection").style.display = "block";
+        document.getElementById("textareaSection").style.display = "none";
+        if (typeof heartBeatSetTimeout !== 'undefined') {
+            clearTimeout(heartBeatSetTimeout);
+        }
+        if (typeof sendChangesSetTimeout !== 'undefined') {
+            clearTimeout(sendChangesSetTimeout);
+        }
+    }
