@@ -56,6 +56,7 @@ def initialize():
 def deinitialize():
     response = make_response(json.dumps('deinitialized successfully'), 200)
     username = request.json['userName']
+    UserOrder(doc='').remove(username)
     response.headers['Content-Type'] = 'application/json;charset=UTF-8'
     return response
 

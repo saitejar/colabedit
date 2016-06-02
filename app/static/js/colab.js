@@ -11,7 +11,7 @@ function logOut() {
     clearTimeout(heartBeatSetTimeout);
     clearTimeout(sendChangesSetTimeout);
 
-    alert("hi");
+    var guestUserName = document.getElementById("UserName").value;
     var cookies = document.cookie.split(";");
     for (var i = 0; i < cookies.length; i++) {
         eraseCookie(cookies[i].split("=")[0]);
@@ -22,7 +22,7 @@ function logOut() {
         type: 'POST',
         dataType: 'json',
         contentType: "application/json;charset=UTF-8",
-        data: JSON.stringify({userName: ''}),
+        data: JSON.stringify({userName: guestUserName}),
         success: function (data, sStatus, jqXHR) {
             console.log(data);
         }
@@ -44,6 +44,7 @@ ppsAck.set('0', true);
 ppsAck.set('1', true);
 ppsTags.sort();
 var acknowledged = true;
+var lastReceivedGreatestSeqNum;
 
 var insertText = function (event) {
     var ch = event.charCode;
@@ -270,7 +271,7 @@ var PPS = function () {
     }
 }();
 
-var lastReceivedGreatestSeqNum;
+
 
 function getCookie(cname) {
     var name = cname + "=";
@@ -298,34 +299,6 @@ function createCookie(name, value, days) {
 }
 function eraseCookie(name) {
     createCookie(name, "", -1);
-}
-
-var flag = 0;
-
-function insertChar(event) {
-    var keyvalue = event.charCode;
-    var guestUserName = getCookie("guestCookie");
-    var position = document.getElementById("textarea").editor.getSelectedRange()[0];
-    console.log(keyvalue, position);
-    socket.emit('insert', {char: keyvalue, pos: position, userName: guestUserName});
-
-}
-
-function deleteChar(event) {
-    var keyvalue = event.keyCode;
-    var guestUserName = getCookie("guestCookie");
-    var position = document.getElementById("textarea").editor.getSelectedRange()[0];
-    if (keyvalue == 8) {
-        console.log(keyvalue, position);
-        socket.emit('insert', {char: keyvalue, pos: position, userName: guestUserName});
-    }// backspace
-    else if (keyvalue == 46) {
-        console.log(keyvalue, position);
-        socket.emit('insert', {char: keyvalue, pos: position, userName: guestUserName});
-    } // delete
-    else {
-        console.log("do nothing");
-    }
 }
 
 function heartbeat(guestName) {
