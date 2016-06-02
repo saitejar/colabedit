@@ -30,7 +30,7 @@ def heartbeat():
     last_received_change = int(request.json['lastGreatestSequenceNumber'])
     users = UserOrder(doc='')
     reply['transactions'] = {}
-    ids = [int(key) for key in users.changes.keys() if int(key) > last_received_change]
+    ids = sorted([int(key) for key in users.changes.keys() if int(key) > last_received_change])
     for id in ids:
         reply['transactions'][id] = json.loads(users.changes[id])
     response = make_response(json.dumps(reply), 200)

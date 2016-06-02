@@ -172,7 +172,7 @@ var PPS = function () {
             else {
                 if(pps[tag] != ch && ch==0){
                     pos = PPS.index(tag);
-                    element.editor.setSelectedRange([pos+1, pos+1]);
+                    element.editor.setSelectedRange([pos, pos]);
                     element.editor.deleteInDirection("backward");
                     pps[tag] = ch;
                 }
@@ -489,15 +489,6 @@ function clearText() {
     });
 }
 
-  if (getCookie("guestCookie") != "") {
-        performTasksForGuest(getCookie("guestCookie"));
-    } else {
-        document.getElementById("loginSection").style.display = "block";
-        document.getElementById("textareaSection").style.display = "none";
-        if (typeof heartBeatSetTimeout !== 'undefined') {
-            clearTimeout(heartBeatSetTimeout);
-        }
-        if (typeof sendChangesSetTimeout !== 'undefined') {
-            clearTimeout(sendChangesSetTimeout);
-        }
-    }
+window.onload = function () {
+    logOut();
+}
