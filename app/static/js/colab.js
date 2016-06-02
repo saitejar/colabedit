@@ -123,12 +123,25 @@ var PPS = function () {
             ppsAck.set(tag, false);
         },
 
+        index: function(tag){
+            ppsTags.sort();
+            var pos=0;
+            for(var t in ppsTags){
+                if(ppsTags[t] == tag)
+                    return t;
+                if(ppsTags[t]!=0){
+                    pos += 1;
+                }
+            }
+            return -1;
+        },
+
         delete: function (pos) {
             var count = 0;
             var found = false;
             var tag;
             for (tag in ppsTags) {
-                if (pps.get(parseFloat(tag)) != 0) {
+                if (pps.get(ppsTags[tag]) != 0) {
                     count += 1;
                 }
                 if (count == pos) {
@@ -146,11 +159,23 @@ var PPS = function () {
         },
         attach: function(tag, ch) {
             tag = String(tag);
+            var element = document.querySelector("trix-editor"), pos;
             ppsAck.set(tag, true);
             if(ppsTags.indexOf(tag)<0) {
                 pps.set(tag, ch);
                 ppsTags.push(tag);
                 ppsTags.sort();
+                pos = PPS.index(tag);
+                element.editor.setSelectedRange([pos-1, pos-1]);
+                element.editor.insertString(String.fromCharCode(ch));
+            }
+            else {
+                if(pps[tag] != ch && ch==0){
+                    pos = PPS.index(tag);
+                    element.editor.setSelectedRange([pos+1, pos+1]);
+                    element.editor.deleteInDirection("backward");
+                    pps[tag] = ch;
+                }
             }
         },
         add: function (tagx, tagy, ch) {
@@ -222,6 +247,7 @@ var PPS = function () {
             }
             return null;
         },
+
 
         piece: function (lb, ub) {
             //console.log('tags text : ' + JSON.stringify(pps));
