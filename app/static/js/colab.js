@@ -171,8 +171,11 @@ var PPS = function () {
                 ppsTags.push(tag);
                 ppsTags.sort();
                 pos = PPS.index(tag);
+                var currentCurPos = document.getElementById("textarea").editor.getSelectedRange()[0];
                 element.editor.setSelectedRange([pos - 1, pos - 1]);
                 element.editor.insertString(String.fromCharCode(ch));
+                element.editor.setSelectedRange([currentCurPos - 1, currentCurPos - 1]);
+                element.editor.insertString('');
             }
             else {
                 if (pps[tag] != ch && ch == 0) {
@@ -270,7 +273,6 @@ var PPS = function () {
                 }
             }
             console.log('Here is the text: ' + curText + ' - ');
-            document.getElementById("textarea").value = curText;
             return curText;
         }
     }
@@ -352,6 +354,7 @@ function heartbeat(guestName) {
                     lastGreatestSequenceNumber: lastReceivedGreatestSeqNum
                 }),
                 success: function (data) {
+
                     if (data != 'None') {
                         console.log("heartbeat sent and received : User Count : " + data.userCount);
                         console.log("heartbeat sent and received : User Position : " + data.userPosition);
@@ -372,7 +375,6 @@ function heartbeat(guestName) {
                                 $.each(value, function (k, v) {
                                     console.log("CHANGE: " + k + " , " + v);
                                     PPS.attach(k, v);
-                                    var currentCurPos = document.getElementById("textarea").editor.getSelectedRange()[0];
 
 
                                 });
@@ -383,7 +385,7 @@ function heartbeat(guestName) {
             });
         }
         ,
-        1000
+        500
     ); //every 5 seconds
 }
 
@@ -484,7 +486,7 @@ function getUserNames() {
             });
         }
         ,
-        10000
+        5000
     );
 };
 
