@@ -461,10 +461,10 @@ function getUserNames() {
                     console.log("USERS " + JSON.stringify(data));
                     document.getElementById("userNames").innerHTML = "";
                     for(var i = 0; i < data.length; i++){
-                        document.getElementById("userNames").innerHTML += "<b>"
+                        document.getElementById("userNames").innerHTML += "<br/><img src='images/user.png' width='40px'/><span style='font-weight:bold;font-size:large'>";
                         document.getElementById("userNames").innerHTML += data[i];
-                        document.getElementById("userNames").innerHTML += "</b>"
-                        document.getElementById("userNames").innerHTML += "<br/>"
+                        document.getElementById("userNames").innerHTML += "</span>";
+                        document.getElementById("userNames").innerHTML += "<br/>";
                     }
 
                 },
