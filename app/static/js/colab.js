@@ -174,8 +174,10 @@ var PPS = function () {
                 var currentCurPos = document.getElementById("textarea").editor.getSelectedRange()[0];
                 element.editor.setSelectedRange([pos - 1, pos - 1]);
                 element.editor.insertString(String.fromCharCode(ch));
-                element.editor.setSelectedRange([currentCurPos - 1, currentCurPos - 1]);
-                element.editor.insertString('');
+                if(pos > currentCurPos)
+                    element.editor.setSelectedRange([currentCurPos, currentCurPos]);
+                else if(pos <= (currentCurPos - 1))
+                    element.editor.setSelectedRange([currentCurPos+1, currentCurPos+1]);
             }
             else {
                 if (pps[tag] != ch && ch == 0) {
