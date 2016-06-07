@@ -77,6 +77,8 @@ def deinitialize():
 def insertText():
     response = make_response(json.dumps('success'), 200)
     pendingChanges = request.json['changesToBePushed']
+    username = request.json['userName']
+
     pps = PPS()
     for key in pendingChanges.keys():
         if key == 'insert':

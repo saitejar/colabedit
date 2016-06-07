@@ -145,19 +145,22 @@ var PPS = function () {
             var count = 0;
             var found = false;
             var tag;
+            ppsTags.sort();
+            var deleteTag=0;
             for (tag in ppsTags) {
-                if (pps.get(ppsTags[tag]) != 0) {
+                if (pps.get(ppsTags[tag]) != '0') {
                     count += 1;
                 }
                 if (count == pos) {
                     found = true;
+                    deleteTag = ppsTags[count];
                     break;
                 }
             }
             if (found == true) {
                 console.log('here');
-                PPS.hide(ppsTags[count]);
-                return ppsTags[count];
+                PPS.hide(deleteTag);
+                return deleteTag;
             }
             console.log('here1');
             return null
@@ -181,10 +184,17 @@ var PPS = function () {
             }
             else {
                 if (pps[tag] != ch && ch == 0) {
+                    var currentCurPos = document.getElementById("textarea").editor.getSelectedRange()[0];
                     pos = PPS.index(tag);
                     element.editor.setSelectedRange([pos, pos]);
                     element.editor.deleteInDirection("backward");
                     pps[tag] = ch;
+                    if (pos > currentCurPos) {
+                        element.editor.setSelectedRange([currentCurPos, currentCurPos]);
+                    } else {
+                        element.editor.setSelectedRange([currentCurPos - 1, currentCurPos - 1]);
+                    }
+
                 }
             }
         },
@@ -377,8 +387,6 @@ function heartbeat(guestName) {
                                 $.each(value, function (k, v) {
                                     console.log("CHANGE: " + k + " , " + v);
                                     PPS.attach(k, v);
-
-
                                 });
                             });
                         }
@@ -405,6 +413,7 @@ function startSendChanges() {
                     delete pendingChanges[key];
                     console.log("Sentchanges: " + key);
                 }
+                var guestusername = document.getElementById("UserName").value;
                 $.ajax({
                     url: '/sendChanges',
                     type: 'POST',
@@ -414,7 +423,8 @@ function startSendChanges() {
                     retryLimit: 10,
                     contentType: "application/json;charset=UTF-8",
                     data: JSON.stringify({
-                        changesToBePushed: sentChanges
+                        changesToBePushed: sentChanges,
+                        userName : guestusername
                     }),
                     success: function (data, sStatus, jqXHR) {
                         acknowledged = true;
