@@ -135,8 +135,8 @@ var PPS = function () {
             var pos = 0;
             for (var t in ppsTags) {
                 if (ppsTags[t] == tag)
-                    return t;
-                if (ppsTags[t] != 0) {
+                    return pos;
+                if (ppsTags[t] != '0') {
                     pos += 1;
                 }
             }
@@ -178,7 +178,7 @@ var PPS = function () {
                 ppsTags.sort();
                 pos = PPS.index(tag);
                 var currentCurPos = document.getElementById("textarea").editor.getSelectedRange()[0];
-                element.editor.setSelectedRange([pos - 1, pos - 1]);
+                element.editor.setSelectedRange([pos, pos]);
                 element.editor.insertString(String.fromCharCode(ch));
                 if(pos > currentCurPos)
                     element.editor.setSelectedRange([currentCurPos, currentCurPos]);
@@ -188,14 +188,14 @@ var PPS = function () {
             else {
                     var currentCurPos = document.getElementById("textarea").editor.getSelectedRange()[0];
                     pos = PPS.index(tag);
-                    //element.editor.setSelectedRange([pos-1, pos-1]);
-                    //element.editor.deleteInDirection("backward");
+                    element.editor.setSelectedRange([pos + 1, pos + 1]);
+                    element.editor.deleteInDirection("backward");
                     pps.set(tag, ch);
-                    //if (pos > currentCurPos) {
-                    //    element.editor.setSelectedRange([currentCurPos, currentCurPos]);
-                    //} else {
-                    //    element.editor.setSelectedRange([currentCurPos - 1, currentCurPos - 1]);
-                    //}
+                    if (pos > currentCurPos) {
+                       element.editor.setSelectedRange([currentCurPos, currentCurPos]);
+                    } else {
+                       element.editor.setSelectedRange([currentCurPos - 1, currentCurPos - 1]);
+                    }
 
             }
         },
