@@ -32,7 +32,6 @@ def heartbeat():
     users = UserOrder(doc='')
     reply['transactions'] = {}
     ids = sorted([int(key) for key in users.changes.keys() if int(key) > last_received_change])
-    print 'acaaakaa ' + str(users.user_changes[username.lower()]) + " and " + str(users.user_changes)
     cur_user_ids = []
     for id in users.user_changes[username.lower()].split(','):
         if id != '':
