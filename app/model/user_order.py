@@ -10,7 +10,7 @@ class UserOrder:
         self.users = hot_redis.Dict(key=self.user_key, client=client)
         self.id = hot_redis.Int(key=self.user_key+"ID", client=client)
         self.changes = hot_redis.Dict(key=self.user_key+"changes", client=client)
-        self.user_changes = hot_redis.Dict(key=self.user_key + "userChangesMap")
+        self.user_changes = hot_redis.Dict(key=self.user_key + "userChangesMap", client=client)
 
     def add(self, user):
         with hot_redis.transaction():

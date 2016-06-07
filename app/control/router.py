@@ -31,7 +31,12 @@ def heartbeat():
     users = UserOrder(doc='')
     reply['transactions'] = {}
     ids = sorted([int(key) for key in users.changes.keys() if int(key) > last_received_change])
-    cur_user_ids = [int(id) for id in users.user_changes[username].split(',')]
+    print 'acaaakaa ' + str(users.user_changes[username.lower()]) + " and " + str(users.user_changes)
+    cur_user_ids = []
+    try:
+        cur_user_ids = [int(id) for id in users.user_changes[username.lower()].split(',')]
+    except:
+        pass
     ids = set(ids).difference(set(cur_user_ids))
     for change_id in ids:
         reply['transactions'][id] = json.loads(users.changes[change_id])
