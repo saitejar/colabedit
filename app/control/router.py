@@ -78,6 +78,7 @@ def insertText():
     response = make_response(json.dumps('success'), 200)
     pendingChanges = request.json['changesToBePushed']
     username = request.json['userName']
+    users = UserOrder(doc='')
 
     pps = PPS()
     for key in pendingChanges.keys():
@@ -86,10 +87,13 @@ def insertText():
         elif key == 'delete':
             pps.hide(pendingChanges[key])
 
-    users = UserOrder()
+
     id = users.get_change_id()
     users.changes[id] = json.dumps(pendingChanges)
     reply = {'id': id}
+    print 'USERCHANGES ' + str(users.userChanges)
+    print "~~~~~~~~~~~~~~~~~~~ " + username
+    users.userChanges[username.lower()].append(int(id))
     response = make_response(json.dumps(reply), 200)
     response.headers['Content-Type'] = 'application/json;charset=UTF-8'
     return response
