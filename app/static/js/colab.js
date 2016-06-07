@@ -49,6 +49,8 @@ ppsAck.set('0', true);
 ppsAck.set('1', true);
 ppsTags.sort();
 var acknowledged = true;
+var lastReceivedGreatestSeqNum;
+
 
 var insertText = function (event) {
     var ch = event.charCode;
@@ -290,8 +292,6 @@ var PPS = function () {
     }
 }();
 
-var lastReceivedGreatestSeqNum;
-
 function getCookie(cname) {
     var name = cname + "=";
     var ca = document.cookie.split(';');
@@ -378,8 +378,9 @@ function heartbeat(guestName) {
                         console.log("Transaction : " + JSON.stringify(data.transactions));
                         if (JSON.stringify(data.transactions) != "{}") {
                             $.each(data.transactions, function (key, value) {
-                                var id = key;
+                                var id = parseInt(key);
                                 if (id > lastReceivedGreatestSeqNum) {
+                                    alert('ID:' + id);
                                     lastReceivedGreatestSeqNum = id;
                                 }
                                 console.log("ID : " + id);
