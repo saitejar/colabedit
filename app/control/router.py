@@ -39,7 +39,7 @@ def heartbeat():
             cur_user_ids.append(int(id))
     ids = set(ids).difference(set(cur_user_ids))
     for change_id in ids:
-        reply['transactions'][id] = json.loads(users.changes[change_id])
+        reply['transactions'][change_id] = json.loads(users.changes[change_id])
     response = make_response(json.dumps(reply), 200)
     response.headers['Content-Type'] = 'application/json;charset=UTF-8'
     return response

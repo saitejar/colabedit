@@ -171,7 +171,8 @@ var PPS = function () {
             tag = String(tag);
             var element = document.querySelector("trix-editor"), pos;
             ppsAck.set(tag, true);
-            if (ppsTags.indexOf(tag) < 0) {
+            ch = parseInt(ch);
+            if (ch != 0) {
                 pps.set(tag, ch);
                 ppsTags.push(tag);
                 ppsTags.sort();
@@ -185,19 +186,17 @@ var PPS = function () {
                     element.editor.setSelectedRange([currentCurPos+1, currentCurPos+1]);
             }
             else {
-                if (pps[tag] != ch && ch == 0) {
                     var currentCurPos = document.getElementById("textarea").editor.getSelectedRange()[0];
                     pos = PPS.index(tag);
-                    element.editor.setSelectedRange([pos, pos]);
-                    element.editor.deleteInDirection("backward");
-                    pps[tag] = ch;
-                    if (pos > currentCurPos) {
-                        element.editor.setSelectedRange([currentCurPos, currentCurPos]);
-                    } else {
-                        element.editor.setSelectedRange([currentCurPos - 1, currentCurPos - 1]);
-                    }
+                    //element.editor.setSelectedRange([pos-1, pos-1]);
+                    //element.editor.deleteInDirection("backward");
+                    pps.set(tag, ch);
+                    //if (pos > currentCurPos) {
+                    //    element.editor.setSelectedRange([currentCurPos, currentCurPos]);
+                    //} else {
+                    //    element.editor.setSelectedRange([currentCurPos - 1, currentCurPos - 1]);
+                    //}
 
-                }
             }
         },
         add: function (tagx, tagy, ch) {
@@ -380,7 +379,6 @@ function heartbeat(guestName) {
                             $.each(data.transactions, function (key, value) {
                                 var id = parseInt(key);
                                 if (id > lastReceivedGreatestSeqNum) {
-                                    alert('ID:' + id);
                                     lastReceivedGreatestSeqNum = id;
                                 }
                                 console.log("ID : " + id);
@@ -430,8 +428,6 @@ function startSendChanges() {
                     success: function (data, sStatus, jqXHR) {
                         acknowledged = true;
                         console.log("(insert) successfully sent and received the message in send changes: " + data);
-
-
                     },
                     error: function (xhr, textStatus, errorThrown) {
                         if (textStatus == 'timeout') {
