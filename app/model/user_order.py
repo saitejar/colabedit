@@ -1,5 +1,5 @@
 from redis_db import client
-from constants import USERS, MAIN_PPS
+from constants import USERS
 import hot_redis
 
 
@@ -10,13 +10,13 @@ class UserOrder:
         self.users = hot_redis.Dict(key=self.user_key, client=client)
         self.id = hot_redis.Int(key=self.user_key+"ID", client=client)
         self.changes = hot_redis.Dict(key=self.user_key+"changes", client=client)
-        self.userChanges = hot_redis.Dict(key=self.user_key+"UserChangeIds", client=client)
+        self.user_changes = hot_redis.Dict(key=self.user_key + "userChangesMap")
 
     def add(self, user):
         with hot_redis.transaction():
-            numberOfUsers = len(self.users.items())
-            self.users[user.lower()] = numberOfUsers
-            self.userChanges[user.lower()] = ''
+            number_of_users = len(self.users.items())
+            self.users[user.lower()] = number_of_users
+            self.user_changes[user.lower()] = ''
 
     def remove(self, user):
         self.users.pop(self.users.index(user))

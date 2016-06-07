@@ -31,8 +31,10 @@ def heartbeat():
     users = UserOrder(doc='')
     reply['transactions'] = {}
     ids = sorted([int(key) for key in users.changes.keys() if int(key) > last_received_change])
-    for id in ids:
-        reply['transactions'][id] = json.loads(users.changes[id])
+    cur_user_ids = [int(id) for id in users.user_changes[username].split(',')]
+    ids = set(ids).difference(set(cur_user_ids))
+    for change_id in ids:
+        reply['transactions'][id] = json.loads(users.changes[change_id])
     response = make_response(json.dumps(reply), 200)
     response.headers['Content-Type'] = 'application/json;charset=UTF-8'
     return response
@@ -73,6 +75,7 @@ def deinitialize():
         response.headers['Content-Type'] = 'application/json;charset=UTF-8'
         return response
 
+
 @router.route('/sendChanges', methods=['POST'])
 def insertText():
     response = make_response(json.dumps('success'), 200)
@@ -87,13 +90,13 @@ def insertText():
         elif key == 'delete':
             pps.hide(pendingChanges[key])
 
-
     id = users.get_change_id()
     users.changes[id] = json.dumps(pendingChanges)
     reply = {'id': id}
-    print 'USERCHANGES ' + str(users.userChanges)
-    print "~~~~~~~~~~~~~~~~~~~ " + username
-    users.userChanges[username.lower()].append(int(id))
+    if users.user_changes[username.lower()]=='':
+        users.user_changes[username.lower()] += str(id)
+    else:
+        users.user_changes[username.lower()] += ',' + str(id)
     response = make_response(json.dumps(reply), 200)
     response.headers['Content-Type'] = 'application/json;charset=UTF-8'
     return response
