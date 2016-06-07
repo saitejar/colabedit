@@ -380,7 +380,6 @@ function heartbeat(guestName) {
                             $.each(data.transactions, function (key, value) {
                                 var id = parseInt(key);
                                 if (id > lastReceivedGreatestSeqNum) {
-                                    alert('ID:' + id);
                                     lastReceivedGreatestSeqNum = id;
                                 }
                                 console.log("ID : " + id);
