@@ -148,7 +148,7 @@ var PPS = function () {
             var found = false;
             var tag;
             ppsTags.sort();
-            var deleteTag=0;
+            var deleteTag= '0';
             for (tag in ppsTags) {
                 if (pps.get(ppsTags[tag]) != '0') {
                     count += 1;
