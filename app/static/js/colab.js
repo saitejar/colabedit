@@ -65,7 +65,6 @@ var deleteText = function (event) {
     var key = event.keyCode, deleteTag;
     var pos = document.getElementById("textarea").editor.getSelectedRange();
     if (key == 8) {
-        alert(pos);
         console.log('deleted');
         if (pos[0] != 0 && pos[1] == pos[0]) {
             deleteTag = PPS.delete(pos[0]);
@@ -203,9 +202,9 @@ var PPS = function () {
             }
         },
         add: function (tagx, tagy, ch) {
-            tagx = parseFloat(tagx);
-            tagy = parseFloat(tagy);
-            var tag = String((tagx + tagy) / 2);
+            tagx = Big(tagx);
+            tagy = Big(tagy);
+            var tag = (tagx.add(tagy)).div(2) + '';
             pps.set(tag, ch);
             ppsTags.push(tag);
             ppsTags.sort();
@@ -213,8 +212,9 @@ var PPS = function () {
             return tag;
         },
         insert: function (pos, ch) {
-            var index = parseInt(localStorage.getItem('userPosition'));
-            var numClients = parseInt(localStorage.getItem('userCount'));
+            Big.DP = 20000;
+            var index = Big(localStorage.getItem('userPosition'));
+            var numClients = Big(localStorage.getItem('userCount'));
             var tag, lowB = 0;
             var found = false;
             ppsTags.sort();
@@ -228,44 +228,47 @@ var PPS = function () {
                 }
             }
 
+
             var lB = lowB, rB = lowB + 1, lAck, rAck, ltag, rtag;
-            ltag = ppsTags[lB];
-            rtag = ppsTags[rB];
+            ltag = Big(ppsTags[lB]);
+            rtag = Big(ppsTags[rB]);
             if (ppsAck.get(ppsTags[lB]) == false && ppsAck.get(ppsTags[rB]) == true) {
                 var left = ppsTags.slice(0, lB).reverse();
                 for (tag in left) {
                     if (ppsAck.get(left[tag]) == true) {
-                        lAck = parseFloat(left[tag]);
+                        lAck = Big(left[tag]);
                         break;
                     }
                 }
-                ltag = parseFloat(ppsTags[lB]);
-                rtag = lAck + (index + 1) * (parseFloat(ppsTags[rB]) - lAck) / numClients;
+                ltag = Big(ppsTags[lB]);
+                rtag = lAck.add((index.add(1)).times(Big(ppsTags[rB]).minus(lAck)).div(numClients));
 
             }
             else if (ppsAck.get(ppsTags[lB]) == true && ppsAck.get(ppsTags[rB]) == false) {
                 var right = ppsTags.slice(rB + 1, ppsTags.length);
                 for (tag in right) {
                     if (ppsAck.get(right[tag]) == true) {
-                        rAck = parseFloat(right[tag]);
+                        rAck = Big(right[tag]);
                         break;
                     }
                 }
-                rtag = parseFloat(ppsTags[rB]);
-                ltag = parseFloat(ppsTags[lB]) + index * (rAck - parseFloat(ppsTags[lB])) / numClients;
+                rtag = Big(ppsTags[rB]);
+                ltag = Big(ppsTags[lB]).add(index.times(rAck.minus(Big(ppsTags[lB]))).div(Big(numClients)));
             }
             else if (ppsAck.get(ppsTags[lB]) == true && ppsAck.get(ppsTags[rB]) == true) {
-                ltag = parseFloat(ppsTags[lB]) + index * (parseFloat(ppsTags[rB]) - parseFloat(ppsTags[lB])) / numClients;
-                rtag = parseFloat(ppsTags[lB]) + (index + 1) * (parseFloat(ppsTags[rB]) - parseFloat(ppsTags[lB])) / numClients;
+                ltag = Big(ppsTags[lB]).add(index.times(Big(ppsTags[rB]).minus(Big(ppsTags[lB]))).div(numClients));
+                rtag = Big(ppsTags[lB]).add((index.add(1)).times(Big(ppsTags[rB]).minus(Big(ppsTags[lB]))).div(numClients));
             }
             else if (ppsAck.get(ppsTags[lB]) == false && ppsAck.get(ppsTags[rB]) == false) {
-                ltag = parseFloat(ppsTags[lB]);
-                rtag = parseFloat(ppsTags[rB]);
+                ltag = Big(ppsTags[lB]);
+                rtag = Big(ppsTags[rB]);
             }
             else {
 
             }
             if (found == true) {
+                ltag = ltag + '';
+                rtag = rtag + '';
                 tag = PPS.add(ltag, rtag, ch);
                 return tag;
             }
