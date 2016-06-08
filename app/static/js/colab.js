@@ -62,22 +62,29 @@ var insertText = function (event) {
 };
 
 var deleteText = function (event) {
-    var key = event.keyCode, tag;
+    var key = event.keyCode, deleteTag;
     var pos = document.getElementById("textarea").editor.getSelectedRange();
     if (key == 8) {
+        alert(pos);
         console.log('deleted');
         if (pos[0] != 0 && pos[1] == pos[0]) {
-            tag = PPS.delete(pos[0]);
-            if (tag != null) {
-                pendingChanges[tag] = 0;
+            deleteTag = PPS.delete(pos[0]);
+            if (deleteTag != null) {
+                PPS.hide(deleteTag);
+                pendingChanges[deleteTag] = 0;
             }
         }
-        else {
+        else if(pos[1]>pos[0]){
+            var deleteTags = [];
             for (var p = pos[0] + 1; p <= pos[1]; p++) {
-                tag = PPS.delete(p);
-                if (tag != null) {
-                    pendingChanges[tag] = 0;
+                deleteTag = PPS.delete(p);
+                if (deleteTag != null) {
+                    deleteTags.push(deleteTag);
                 }
+            }
+            for(p in deleteTags){
+                PPS.hide(deleteTags[p]);
+                pendingChanges[deleteTags[p]] = 0;
             }
         }
     }// backspace ?
@@ -160,7 +167,6 @@ var PPS = function () {
                 }
             }
             if (found == true) {
-                PPS.hide(deleteTag);
                 return deleteTag;
             }
             return null;
@@ -186,14 +192,14 @@ var PPS = function () {
             else {
                     var currentCurPos = document.getElementById("textarea").editor.getSelectedRange()[0];
                     pos = PPS.index(tag);
-                    element.editor.setSelectedRange([pos + 1, pos + 1]);
+                    element.editor.setSelectedRange([pos, pos]);
                     element.editor.deleteInDirection("backward");
                     pps.set(tag, ch);
-                    if (pos > currentCurPos) {
-                       element.editor.setSelectedRange([currentCurPos, currentCurPos]);
-                    } else {
-                       element.editor.setSelectedRange([currentCurPos - 1, currentCurPos - 1]);
-                    }
+                    // if (pos > currentCurPos) {
+                    //    element.editor.setSelectedRange([currentCurPos, currentCurPos]);
+                    // } else {
+                    //    element.editor.setSelectedRange([currentCurPos - 1, currentCurPos - 1]);
+                    // }
 
             }
         },
