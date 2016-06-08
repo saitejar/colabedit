@@ -130,7 +130,6 @@ function getTextAreaSelection(textarea) {
 
 var PPS = function () {
     return {
-
         hide: function (tag) {
             tag = String(tag);
             pps.set(tag, 0);
@@ -275,7 +274,6 @@ var PPS = function () {
 
 
         piece: function (lb, ub) {
-            //console.log('tags text : ' + JSON.stringify(pps));
             ppsTags.sort();
             var lP = ppsTags.indexOf(String(lb)), rP = ppsTags.indexOf(String(ub)), tag;
             if (lP < 0 || rP < 0) {
@@ -289,7 +287,6 @@ var PPS = function () {
                     curText += String.fromCharCode(pps.get(tag));
                 }
             }
-            console.log('Here is the text: ' + curText + ' - ');
             return curText;
         }
     }
@@ -324,32 +321,6 @@ function eraseCookie(name) {
 }
 
 var flag = 0;
-
-function insertChar(event) {
-    var keyvalue = event.charCode;
-    var guestUserName = getCookie("guestCookie");
-    var position = document.getElementById("textarea").editor.getSelectedRange()[0];
-    console.log(keyvalue, position);
-    socket.emit('insert', {char: keyvalue, pos: position, userName: guestUserName});
-
-}
-
-function deleteChar(event) {
-    var keyvalue = event.keyCode;
-    var guestUserName = getCookie("guestCookie");
-    var position = document.getElementById("textarea").editor.getSelectedRange()[0];
-    if (keyvalue == 8) {
-        console.log(keyvalue, position);
-        socket.emit('insert', {char: keyvalue, pos: position, userName: guestUserName});
-    }// backspace
-    else if (keyvalue == 46) {
-        console.log(keyvalue, position);
-        socket.emit('insert', {char: keyvalue, pos: position, userName: guestUserName});
-    } // delete
-    else {
-        console.log("do nothing");
-    }
-}
 
 function heartbeat(guestName) {
 
