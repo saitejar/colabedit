@@ -150,7 +150,7 @@ var PPS = function () {
             ppsTags.sort();
             var deleteTag= '0';
             for (tag in ppsTags) {
-                if (pps.get(ppsTags[tag]) != '0') {
+                if (pps.get(ppsTags[tag]) != 0) {
                     count += 1;
                 }
                 if (count == pos) {
@@ -160,12 +160,10 @@ var PPS = function () {
                 }
             }
             if (found == true) {
-                console.log('here');
                 PPS.hide(deleteTag);
                 return deleteTag;
             }
-            console.log('here1');
-            return null
+            return null;
         },
         attach: function (tag, ch) {
             tag = String(tag);
