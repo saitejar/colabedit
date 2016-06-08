@@ -294,7 +294,7 @@ h1 {
 }
 
 .log-btn {
-  background: #0AC986;
+  background: yellowgreen;
   dispaly: inline-block;
   width: 100%;
   font-size: 16px;
@@ -362,6 +362,9 @@ h1 {
 
 #UserName{
   height: 50px;
+  font-weight: bolder;
+  font-size: large;
+  color: #0e90d2;
 }
 
 button:hover{
