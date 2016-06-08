@@ -141,9 +141,10 @@ var PPS = function () {
             ppsTags.sort();
             var pos = 0;
             for (var t in ppsTags) {
-                if (ppsTags[t] == tag)
+                if (ppsTags[t] == tag){
                     return pos;
-                if (ppsTags[t] != '0') {
+                }
+                if (pps.get(ppsTags[t]) != 0) {
                     pos += 1;
                 }
             }
@@ -200,7 +201,6 @@ var PPS = function () {
                     } else {
                        element.editor.setSelectedRange([currentCurPos - 1, currentCurPos - 1]);
                     }
-
             }
         },
         add: function (tagx, tagy, ch) {
