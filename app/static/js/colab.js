@@ -192,14 +192,14 @@ var PPS = function () {
             else {
                     var currentCurPos = document.getElementById("textarea").editor.getSelectedRange()[0];
                     pos = PPS.index(tag);
-                    element.editor.setSelectedRange([pos, pos]);
+                    element.editor.setSelectedRange([pos + 1, pos + 1]);
                     element.editor.deleteInDirection("backward");
                     pps.set(tag, ch);
-                    // if (pos > currentCurPos) {
-                    //    element.editor.setSelectedRange([currentCurPos, currentCurPos]);
-                    // } else {
-                    //    element.editor.setSelectedRange([currentCurPos - 1, currentCurPos - 1]);
-                    // }
+                    if (pos > currentCurPos) {
+                       element.editor.setSelectedRange([currentCurPos, currentCurPos]);
+                    } else {
+                       element.editor.setSelectedRange([currentCurPos - 1, currentCurPos - 1]);
+                    }
 
             }
         },
